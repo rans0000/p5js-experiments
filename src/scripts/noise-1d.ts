@@ -9,7 +9,7 @@ const sketch = (p5: P5) => {
 
     p5.draw = () => {
         p5.fill('orange');
-        p5.ellipse(50, 50, 10);
+        p5.ellipse(50, 50, p5.random(10, 20));
     };
 };
 
