@@ -1,15 +1,5 @@
-//variables
-:root {
-    --bg-color: #242e38;
-    --text-color-primary: #a2b0be;
-    --anim-sm: 0.2s;
-    --anim-lg: 0.5s;
-}
-//styles
-* {
-    margin: 0;
-    padding: 0;
-}
+@use './utils' as *;
+@use './dialog.scss' as *;
 html {
     height: 100%;
 }
@@ -19,7 +9,7 @@ body {
     height: 100%;
     background: var(--bg-color);
     font-family: Arial, Helvetica, sans-serif;
-    color: var(--text-color-primary);
+    color: var(--text-color-light);
 }
 main {
     flex-grow: 1;
@@ -30,23 +20,47 @@ footer {
     padding: 1rem 1rem;
     text-align: center;
 }
-.body__fullscreen {
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    position: fixed;
+a:link,
+a:visited {
+    color: var(--text-color-light);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--text-color-light);
+    transition: var(--anim-lg);
+}
+a:visited {
+    color: pink;
+}
 
-    main {
-        width: 100%;
-        height: 100%;
+a:hover,
+a:focus {
+    color: #fff;
+}
+
+button {
+    border: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    margin: 0;
+    font-size: small;
+    line-height: 1;
+    background-color: var(--bg-button);
+    color: #fff;
+    cursor: pointer;
+    transition: all var(--anim-sm);
+
+    &:hover,
+    &:focus {
+        background-color: var(--bg-button-hover);
+    }
+    &:active {
+        background-color: var(--bg-button-active);
     }
 }
+
 ul {
     list-style: none;
 }
-h1 {
+:not(.body__fullscreen) > header > h1 {
     text-align: center;
     margin: 1rem auto 2rem;
     position: relative;
@@ -60,21 +74,63 @@ h1 {
         height: 1px;
         left: 50%;
         transform: translateX(-50%);
-        background: var(--text-color-primary);
+        background: var(--text-color-light);
         position: absolute;
     }
 }
-a:link,
-a:visited {
-    color: var(--text-color-primary);
-    text-decoration: none;
-    border-bottom: 1px dotted var(--text-color-primary);
-    transition: var(--anim-lg);
+.body__fullscreen {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+
+    > header {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        z-index: 10;
+        margin: 1rem;
+
+        > h1 {
+            text-align: start;
+            margin: 0 0 1rem;
+
+            span {
+                font-size: large;
+                display: block;
+                color: white;
+            }
+            span + span {
+                font-size: small;
+                color: var(--text-color-light);
+            }
+
+            &::before {
+                left: 0;
+                transform: none;
+                width: min(50%, 20rem);
+            }
+        }
+    }
+
+    > main {
+        width: 100%;
+        height: 100%;
+    }
+
+    > footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+    }
 }
 
-a:hover,
-a:focus {
-    color: #fff;
+.dg {
+    z-index: 100 !important;
 }
 .main-index {
     margin: auto;

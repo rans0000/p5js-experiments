@@ -1,0 +1,70 @@
+@use './utils' as *;
+
+@keyframes slide-in {
+    0% {
+        transform: translate3d(min(-90%, -30rem), 0, 0);
+    }
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
+}
+@keyframes slide-out {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    100% {
+        transform: translate3d(min(-90%, -30rem), 0, 0);
+    }
+}
+
+::backdrop {
+    background-image: linear-gradient(90deg, rgb(10, 34, 29), rgb(21, 51, 32));
+    opacity: 0.75;
+}
+dialog {
+    position: fixed;
+    margin: 0;
+    padding: 0;
+    top: 0;
+    left: 0;
+    border: none;
+    width: min(90%, 30rem);
+    height: 100%;
+    transform: translate3d(min(-90%, -30rem), 0, 0);
+}
+
+dialog[open] {
+    animation: slide-in var(--anim-sm) forwards;
+}
+
+dialog[close] {
+    animation: slide-out var(--anim-sm) forwards;
+}
+
+.dialog-wrapper {
+    padding: 1rem 2rem;
+    font-size: medium;
+    color: #2b425a;
+    position: relative;
+
+    h1 {
+        font-size: medium;
+        padding-bottom: 0.5rem;
+        padding-right: 1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid var(--text-color-light);
+        width: fit-content;
+    }
+}
+.btn-dialog-close {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    z-index: 2;
+    border-radius: 50%;
+    font-size: large;
+    user-select: none;
+}
