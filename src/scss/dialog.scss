@@ -68,3 +68,16 @@ dialog[close] {
     font-size: large;
     user-select: none;
 }
+a.link-repo {
+    &:link,
+    &:visited {
+        display: inline-block;
+        color: var(--bg-button);
+        font-size: small;
+        margin: 1rem 0 0;
+    }
+    &:hover,
+    &:focus {
+        color: var(--bg-button-hover);
+    }
+}
