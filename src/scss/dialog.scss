@@ -22,6 +22,8 @@
     opacity: 0.75;
 }
 dialog {
+    display: flex;
+    flex-direction: column;
     position: fixed;
     margin: 0;
     padding: 0;
@@ -46,6 +48,9 @@ dialog[close] {
     font-size: medium;
     color: #2b425a;
     position: relative;
+    overflow: hidden;
+    height: fit-content;
+    flex-grow: 1;
 
     h1 {
         font-size: medium;

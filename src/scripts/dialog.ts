@@ -15,6 +15,12 @@ class DialogManager {
         this.closeButton.addEventListener('click', () => {
             this.closeDialog();
         });
+
+        this.dialog.addEventListener('click', (event: MouseEvent) => {
+            if ((event.target as HTMLElement).nodeName === 'DIALOG') {
+                this.closeDialog();
+            }
+        });
     }
 
     openDialog() {

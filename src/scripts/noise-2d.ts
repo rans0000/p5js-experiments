@@ -15,7 +15,10 @@ const options = {
 };
 
 const sketch = (p5: P5) => {
-    const gui = new GUI();
+    const gui = new GUI({ autoPlace: false });
+    gui.domElement.id = 'gui';
+    document.getElementById('gui')?.appendChild(gui.domElement);
+
     gui.add(options, 'phase', 0, 200, 0.01);
     gui.add(options, 'increment', 0, 0.1, 0.001).name('scale');
     gui.add(options, 'dimensions', 50, 800, 1).onChange((size: number) => {

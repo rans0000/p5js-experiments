@@ -130,7 +130,10 @@ ul {
     }
 }
 
-.dg {
+#gui {
+    position: fixed;
+    bottom: 4rem;
+    right: 0;
     z-index: 100 !important;
 }
 .main-index {

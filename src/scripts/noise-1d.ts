@@ -10,7 +10,10 @@ const options = {
     width: 500
 };
 
-const gui = new GUI();
+const gui = new GUI({ autoPlace: false });
+gui.domElement.id = 'gui';
+document.getElementById('gui')?.appendChild(gui.domElement);
+
 gui.add(options, 'xIncrement', 0, 0.04, 0.001);
 gui.add(options, 'yIncrement', 0, 1, 0.001).name('Speed');
 gui.add(options, 'height', 50, 500, 1);
@@ -41,8 +44,7 @@ const sketch = (p5: P5) => {
 
         for (let i = 0; i < options.width; i++) {
             const x = i + innerWidth / 2 - options.width / 2;
-            const y =
-                p5.noise(options.xOffset) * options.height + innerHeight / 2 - options.height / 2;
+            const y = p5.noise(options.xOffset) * options.height + innerHeight / 2 - options.height / 2;
 
             p5.vertex(x, y);
             options.xOffset += options.xIncrement;
