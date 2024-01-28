@@ -68,8 +68,6 @@ const sketch = (p5: P5) => {
         options.phase += options.phaseIncrement * ~~options.isAnimated;
         p5.updatePixels();
     };
-
-    // p5.noLoop();
 };
 
 function resizeDisplay(canvas: P5) {
