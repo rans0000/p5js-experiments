@@ -11,7 +11,9 @@ const options = {
     height: 200,
     width: 200,
     isFullscreen: false,
-    dimensions: 200
+    dimensions: 200,
+    detail: 4,
+    difference: 0.5
 };
 
 const sketch = (p5: P5) => {
@@ -21,8 +23,16 @@ const sketch = (p5: P5) => {
 
     gui.add(options, 'phase', 0, 200, 0.01);
     gui.add(options, 'increment', 0, 0.1, 0.001).name('scale');
-    gui.add(options, 'dimensions', 50, 800, 1).onChange((size: number) => {
-        (options.width = size), (options.height = size);
+    gui.add(options, 'dimensions', 50, 800, 1).onChange((dimensions: number) => {
+        (options.width = dimensions), (options.height = dimensions);
+    });
+    gui.add(options, 'detail', 1, 16, 1).onChange((detail: number) => {
+        options.detail = detail;
+        p5.noiseDetail(detail, options.difference);
+    });
+    gui.add(options, 'difference', 0, 1, 0.1).onChange((difference: number) => {
+        options.difference = difference;
+        p5.noiseDetail(options.detail, difference);
     });
     gui.add(options, 'isAnimated');
     gui.add(options, 'isFullscreen')
