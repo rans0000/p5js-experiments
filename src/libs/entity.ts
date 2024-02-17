@@ -1,4 +1,7 @@
 import P5 from 'p5';
+import { TEntity } from '../utils/types';
+
+const defaultConfig = { x: 0, y: 0, r: 5 };
 
 class Entity {
     x: number;
@@ -8,15 +11,14 @@ class Entity {
     constructor(
         readonly p5: P5,
         readonly collection: Entity[],
-        x: number,
-        y: number,
-        r: number = 5
+        _config: TEntity = {}
     ) {
         this.p5 = p5;
         this.collection = collection;
-        this.x = x;
-        this.y = y;
-        this.r = r;
+        const config = { ...defaultConfig, ..._config };
+        this.x = config.x;
+        this.y = config.y;
+        this.r = config.r;
         collection.push(this);
     }
 

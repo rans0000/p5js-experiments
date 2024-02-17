@@ -1,16 +1,18 @@
 import P5 from 'p5';
 import Entity from './entity';
+import { TEntity } from '../utils/types';
+
+const defaultConfig = { x: 0, y: 0, r: 5 };
 
 class Particle extends Entity {
     delta: number;
     constructor(
         readonly p5: P5,
         readonly collection: Entity[],
-        x: number,
-        y: number,
-        r: number = 5
+        _config: TEntity = {}
     ) {
-        super(p5, collection, x, y, r);
+        const config = { ...defaultConfig, ..._config };
+        super(p5, collection, { x: config.x, y: config.y, r: config.r });
         this.delta = p5.random(255);
     }
 

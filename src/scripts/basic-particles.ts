@@ -22,7 +22,9 @@ const sketch = (p5: P5) => {
 
         window.addEventListener('resize', () => resizeDisplay(p5));
         for (let i = 0; i < 100; i++) {
-            collection.push(new Particle(p5, collection, p5.random(innerWidth), p5.random(innerHeight), p5.random(20)));
+            collection.push(
+                new Particle(p5, collection, { x: p5.random(innerWidth), y: p5.random(innerHeight), r: p5.random(5, 25) })
+            );
         }
     };
 
