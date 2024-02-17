@@ -1,11 +1,9 @@
 import P5 from 'p5';
 import { TEntity } from '../utils/types';
-
-const defaultConfig = { x: 0, y: 0, r: 5 };
+import { defaultConfig } from '../utils/utils';
 
 class Entity {
-    x: number;
-    y: number;
+    pos: P5.Vector;
     r: number;
 
     constructor(
@@ -15,17 +13,18 @@ class Entity {
     ) {
         this.p5 = p5;
         this.collection = collection;
-        const config = { ...defaultConfig, ..._config };
-        this.x = config.x;
-        this.y = config.y;
+        const config = { pos: p5.createVector(0, 0), ...defaultConfig, ..._config };
+        this.pos = config.pos;
         this.r = config.r;
         collection.push(this);
     }
 
-    process(deltaTime: number): void {}
+    update(deltaTime: number): this {
+        return this;
+    }
 
-    draw(deltaTime: number): void {
-        this.process(deltaTime);
+    draw(deltaTime: number): this {
+        return this;
     }
 }
 

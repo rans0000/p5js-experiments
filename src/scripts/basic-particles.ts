@@ -2,6 +2,43 @@ import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import Entity from '../libs/entity';
 import Particle from '../libs/particle';
+import { TEntity } from '../utils/types';
+
+/* ********************************************* */
+class BasicParticle extends Particle {
+    delta: number;
+
+    constructor(
+        readonly p5: P5,
+        readonly collection: Entity[],
+        _config: TEntity = {}
+    ) {
+        super(p5, collection, _config);
+        this.delta = p5.random(255);
+    }
+
+    update(deltaTime: number): this {
+        this.pos.x += this.p5.random(-2, 2);
+        this.pos.y += this.p5.random(-2, 2);
+        this.delta = (this.delta + deltaTime / 1000) % 255;
+        return this;
+    }
+
+    draw(deltaTime: number): this {
+        this.update(deltaTime);
+        this.p5.noStroke();
+        const h = this.p5.noise(this.delta) * 255;
+        const s = this.p5.noise(this.delta + 10) * 255;
+        const v = this.p5.noise(this.delta + 100) * 255;
+        this.p5.fill(h, s, v, this.p5.random(0.1));
+        super.draw(deltaTime);
+        return this;
+    }
+}
+
+export default Particle;
+
+/* ********************************************* */
 
 const options = {};
 const collection: Entity[] = [];
@@ -23,14 +60,17 @@ const sketch = (p5: P5) => {
         window.addEventListener('resize', () => resizeDisplay(p5));
         for (let i = 0; i < 100; i++) {
             collection.push(
-                new Particle(p5, collection, { x: p5.random(innerWidth), y: p5.random(innerHeight), r: p5.random(5, 25) })
+                new BasicParticle(p5, collection, {
+                    pos: p5.createVector(p5.random(innerWidth), p5.random(innerHeight)),
+                    r: p5.random(5, 25)
+                })
             );
         }
     };
 
     //draw
     p5.draw = () => {
-        collection.forEach((item) => item.draw(p5.deltaTime));
+        collection.forEach((item) => item.update(p5.deltaTime).draw(p5.deltaTime));
     };
 };
 
