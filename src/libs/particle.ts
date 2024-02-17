@@ -1,5 +1,6 @@
 import P5 from 'p5';
-import { TParticle } from '../utils/types';
+import { TEdges, TParticle } from '../utils/types';
+import { defaultEdgeConfig } from '../utils/utils';
 import Entity from './entity';
 
 class Particle extends Entity {
@@ -27,25 +28,31 @@ class Particle extends Entity {
         this.forces = config.forces;
     }
 
-    applyEdgeWrap(): this {
+    applyEdgeBounce(deltaTime: number, _config?: TEdges): this {
+        const config = { ...defaultEdgeConfig, ..._config };
         const { innerWidth, innerHeight } = window;
-        if (this.pos.y > innerHeight) {
+        if (config.bottom && this.pos.y > innerHeight) {
             this.velocity.y *= -1;
         }
-        if (this.pos.y < 0) {
+        if (config.top && this.pos.y < 0) {
             this.velocity.y *= -1;
         }
-        if (this.pos.x > innerWidth) {
+        if (config.right && this.pos.x > innerWidth) {
             this.velocity.x *= -1;
         }
-        if (this.pos.x < 0) {
+        if (config.left && this.pos.x < 0) {
             this.velocity.x *= -1;
         }
         return this;
     }
 
-    applyForces(deltaTime: number, forces: P5.Vector[]): this {
-        forces.map((force) => this.velocity.add(force));
+    applyForces(deltaTime, forces: P5.Vector[], gravity = this.p5.createVector()): this {
+        this.velocity.add(gravity);
+        forces.forEach((force) => {
+            let f = this.p5.createVector();
+            P5.Vector.div(force, this.mass, f);
+            this.velocity.add(f);
+        });
         return this;
     }
 

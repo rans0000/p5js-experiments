@@ -11,3 +11,10 @@ export type TParticle = TEntity & {
     accelaration?: P5.Vector;
     forces?: P5.Vector[];
 };
+
+export type TEdges = {
+    top: boolean;
+    right: boolean;
+    bottom: boolean;
+    left: boolean;
+};

@@ -1,6 +1,6 @@
 import P5 from 'p5';
-import { TEntity } from '../utils/types';
-import { defaultConfig } from '../utils/utils';
+import { TEdges, TEntity } from '../utils/types';
+import { defaultEntityConfig } from '../utils/utils';
 
 class Entity {
     pos: P5.Vector;
@@ -13,15 +13,15 @@ class Entity {
     ) {
         this.p5 = p5;
         this.collection = collection;
-        const config = { pos: p5.createVector(0, 0), ...defaultConfig, ..._config };
+        const config = { pos: p5.createVector(0, 0), ...defaultEntityConfig, ..._config };
         this.pos = config.pos;
         this.r = config.r;
         collection.push(this);
     }
-    applyEdgeWrap(deltaTime: number): this {
+    applyEdgeBounce(deltaTime: number, _config?: TEdges): this {
         return this;
     }
-    applyForces(deltaTime: number, forces: P5.Vector[]): this {
+    applyForces(deltaTime: number, forces: P5.Vector[], gravity: P5.Vector): this {
         return this;
     }
 

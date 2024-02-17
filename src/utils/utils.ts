@@ -1,3 +1,9 @@
-import P5 from 'p5';
+import { TEdges } from './types';
 
-export const defaultConfig = { r: 5 };
+export const defaultEntityConfig = { r: 5 };
+export const defaultEdgeConfig: TEdges = {
+    top: true,
+    right: true,
+    bottom: true,
+    left: true
+};

@@ -2,14 +2,14 @@ import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import Entity from '../libs/entity';
 import Particle from '../libs/particle';
-import { TEntity } from '../utils/types';
+import { TParticle } from '../utils/types';
 
 /* ********************************************* */
 class BouncingBall extends Particle {
     constructor(
         readonly p5: P5,
         readonly collection: Entity[],
-        _config: TEntity = {}
+        _config: TParticle = {}
     ) {
         super(p5, collection, _config);
     }
@@ -42,7 +42,7 @@ const sketch = (p5: P5) => {
 
     const gravity = p5.createVector(0, 0.02);
     const wind = p5.createVector(0.01, 0);
-    let forces = [gravity];
+    let forces: P5.Vector[] = [];
 
     //setup
     p5.setup = () => {
@@ -54,11 +54,12 @@ const sketch = (p5: P5) => {
         p5.colorMode(p5.HSB);
 
         window.addEventListener('resize', () => resizeDisplay(p5));
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < 2; i++) {
             collection.push(
                 new BouncingBall(p5, collection, {
-                    pos: p5.createVector(innerWidth / 2, innerHeight / 2),
-                    r: 30
+                    pos: p5.createVector(innerWidth / 2 + i * 150, innerHeight / 2),
+                    r: Math.sqrt((i + 1) * 2) * 15,
+                    mass: (i + 1) * 2
                 })
             );
         }
@@ -67,10 +68,14 @@ const sketch = (p5: P5) => {
     //draw
     p5.draw = () => {
         p5.background('#4f4f95');
-        forces = p5.mouseIsPressed ? [gravity, wind] : [gravity];
+        forces = p5.mouseIsPressed ? [wind] : [];
 
         collection.forEach((item) =>
-            item.applyForces(p5.deltaTime, forces).update(p5.deltaTime).draw(p5.deltaTime).applyEdgeWrap(p5.deltaTime)
+            item
+                .applyForces(p5.deltaTime, forces, gravity)
+                .update(p5.deltaTime)
+                .draw(p5.deltaTime)
+                .applyEdgeBounce(p5.deltaTime)
         );
     };
 };
