@@ -27,8 +27,31 @@ class Particle extends Entity {
         this.forces = config.forces;
     }
 
+    applyEdgeWrap(): this {
+        const { innerWidth, innerHeight } = window;
+        if (this.pos.y > innerHeight) {
+            this.velocity.y *= -1;
+        }
+        if (this.pos.y < 0) {
+            this.velocity.y *= -1;
+        }
+        if (this.pos.x > innerWidth) {
+            this.velocity.x *= -1;
+        }
+        if (this.pos.x < 0) {
+            this.velocity.x *= -1;
+        }
+        return this;
+    }
+
+    applyForces(deltaTime: number, forces: P5.Vector[]): this {
+        forces.map((force) => this.velocity.add(force));
+        return this;
+    }
+
     update(deltaTime: number): this {
-        this.accelaration = this.p5.createVector(0, 0);
+        this.accelaration = this.velocity;
+        this.pos.add(this.accelaration);
         return this;
     }
 

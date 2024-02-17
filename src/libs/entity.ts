@@ -18,6 +18,12 @@ class Entity {
         this.r = config.r;
         collection.push(this);
     }
+    applyEdgeWrap(deltaTime: number): this {
+        return this;
+    }
+    applyForces(deltaTime: number, forces: P5.Vector[]): this {
+        return this;
+    }
 
     update(deltaTime: number): this {
         return this;
