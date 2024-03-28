@@ -31,16 +31,21 @@ class Particle extends Entity {
     applyEdgeBounce(deltaTime: number, _config?: TEdges): this {
         const config = { ...defaultEdgeConfig, ..._config };
         const { innerWidth, innerHeight } = window;
-        if (config.bottom && this.pos.y > innerHeight) {
+
+        if (config.bottom && this.pos.y >= innerHeight - this.r) {
+            this.pos.y = innerHeight - this.r;
             this.velocity.y *= -1;
         }
-        if (config.top && this.pos.y < 0) {
+        if (config.top && this.pos.y < this.r) {
+            this.pos.y = this.r;
             this.velocity.y *= -1;
         }
-        if (config.right && this.pos.x > innerWidth) {
+        if (config.right && this.pos.x >= innerWidth - this.r) {
+            this.pos.x = innerWidth - this.r;
             this.velocity.x *= -1;
         }
-        if (config.left && this.pos.x < 0) {
+        if (config.left && this.pos.x <= this.r) {
+            this.pos.x = this.r;
             this.velocity.x *= -1;
         }
         return this;

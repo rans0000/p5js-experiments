@@ -74,8 +74,8 @@ const sketch = (p5: P5) => {
             item
                 .applyForces(p5.deltaTime, forces, gravity)
                 .update(p5.deltaTime)
-                .draw(p5.deltaTime)
                 .applyEdgeBounce(p5.deltaTime)
+                .draw(p5.deltaTime)
         );
     };
 };
