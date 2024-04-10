@@ -1,7 +1,7 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import Entity from '../libs/entity';
-import Particle from '../libs/particle';
+import Particle from '../libs/particle2D';
 import { TParticle } from '../utils/types';
 
 /* ********************************************* */
@@ -28,7 +28,7 @@ class BouncingBall extends Particle {
     }
 }
 
-export default Particle;
+export default BouncingBall;
 
 /* ********************************************* */
 

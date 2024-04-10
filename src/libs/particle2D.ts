@@ -3,7 +3,7 @@ import { TEdges, TParticle } from '../utils/types';
 import { defaultEdgeConfig } from '../utils/utils';
 import Entity from './entity';
 
-class Particle extends Entity {
+class Particle2D extends Entity {
     mass: number;
     velocity: P5.Vector;
     accelaration: P5.Vector;
@@ -73,4 +73,4 @@ class Particle extends Entity {
     }
 }
 
-export default Particle;
+export default Particle2D;

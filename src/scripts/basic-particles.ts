@@ -1,11 +1,11 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import Entity from '../libs/entity';
-import Particle from '../libs/particle';
+import Particle2D from '../libs/particle2D';
 import { TEntity } from '../utils/types';
 
 /* ********************************************* */
-class BasicParticle extends Particle {
+class BasicParticle extends Particle2D {
     delta: number;
 
     constructor(
@@ -36,7 +36,7 @@ class BasicParticle extends Particle {
     }
 }
 
-export default Particle;
+export default BasicParticle;
 
 /* ********************************************* */
 
