@@ -1,5 +1,5 @@
 import P5 from 'p5';
-import { TEdges, TParticle } from '../utils/types';
+import { TEdges, TEntityType, TParticle } from '../utils/types';
 import { defaultEdgeConfig } from '../utils/utils';
 import Entity from './entity';
 
@@ -22,6 +22,7 @@ class Particle2D extends Entity {
             ..._config
         };
         super(p5, collection, config);
+        this.type = TEntityType.PARTICLES;
         this.mass = config.mass;
         this.velocity = config.velocity;
         this.accelaration = config.accelaration;

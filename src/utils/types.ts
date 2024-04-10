@@ -1,5 +1,10 @@
 import P5 from 'p5';
 
+export enum TEntityType {
+    ENTITY,
+    PARTICLES
+}
+
 export type TEntity = {
     pos?: P5.Vector;
     r?: number;

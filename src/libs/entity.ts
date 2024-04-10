@@ -1,8 +1,9 @@
 import P5 from 'p5';
-import { TEdges, TEntity } from '../utils/types';
+import { TEdges, TEntity, TEntityType } from '../utils/types';
 import { defaultEntityConfig } from '../utils/utils';
 
 class Entity {
+    type: TEntityType;
     pos: P5.Vector;
     r: number;
 
@@ -14,6 +15,7 @@ class Entity {
         this.p5 = p5;
         this.collection = collection;
         const config = { pos: p5.createVector(0, 0), ...defaultEntityConfig, ..._config };
+        this.type = TEntityType.ENTITY;
         this.pos = config.pos;
         this.r = config.r;
         collection.push(this);
