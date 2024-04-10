@@ -1,11 +1,11 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import Entity from '../libs/entity';
-import Particle from '../libs/particle2D';
-import { TParticle } from '../utils/types';
+import Particle2D from '../libs/particle2D';
+import { TApplicableForces, TParticle } from '../utils/types';
 
 /* ********************************************* */
-class BouncingBall extends Particle {
+class BouncingBall extends Particle2D {
     constructor(
         readonly p5: P5,
         readonly collection: Entity[],
@@ -14,13 +14,12 @@ class BouncingBall extends Particle {
         super(p5, collection, _config);
     }
 
-    update(deltaTime: number): this {
-        super.update(deltaTime);
+    update(deltaTime: number, forceConfig: TApplicableForces): this {
+        super.update(deltaTime, forceConfig);
         return this;
     }
 
     draw(deltaTime: number): this {
-        this.update(deltaTime);
         this.p5.stroke(255);
         this.p5.fill(128, 5);
         super.draw(deltaTime);
@@ -28,21 +27,14 @@ class BouncingBall extends Particle {
     }
 }
 
-export default BouncingBall;
-
 /* ********************************************* */
 
-const options = {};
-const collection: Entity[] = [];
+const collection: Particle2D[] = [];
 
 const sketch = (p5: P5) => {
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
-
-    const gravity = p5.createVector(0, 0.02);
-    const wind = p5.createVector(0.01, 0);
-    let forces: P5.Vector[] = [];
 
     //setup
     p5.setup = () => {
@@ -68,15 +60,9 @@ const sketch = (p5: P5) => {
     //draw
     p5.draw = () => {
         p5.background('#4f4f95');
-        forces = p5.mouseIsPressed ? [wind] : [];
+        const isWindActive = p5.mouseIsPressed;
 
-        collection.forEach((item) =>
-            item
-                .applyForces(p5.deltaTime, forces, gravity)
-                .update(p5.deltaTime)
-                .applyEdgeBounce(p5.deltaTime)
-                .draw(p5.deltaTime)
-        );
+        collection.forEach((item) => item.update(p5.deltaTime, { wind: isWindActive }).draw(p5.deltaTime));
     };
 };
 

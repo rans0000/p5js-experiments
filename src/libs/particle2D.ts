@@ -1,7 +1,13 @@
 import P5 from 'p5';
-import { TEdges, TEntityType, TParticle } from '../utils/types';
+import { TApplicableForces, TEdges, TEntityType, TParticle } from '../utils/types';
 import { defaultEdgeConfig } from '../utils/utils';
 import Entity from './entity';
+
+const defaultApplicableForces: TApplicableForces = {
+    gravity: true,
+    wind: true,
+    friction: true
+};
 
 class Particle2D extends Entity {
     mass: number;
@@ -52,19 +58,41 @@ class Particle2D extends Entity {
         return this;
     }
 
-    applyForces(deltaTime, forces: P5.Vector[], gravity = this.p5.createVector()): this {
-        this.velocity.add(gravity);
-        forces.forEach((force) => {
-            let f = this.p5.createVector();
-            P5.Vector.div(force, this.mass, f);
-            this.velocity.add(f);
-        });
+    applyForces(deltaTime, _forceConfig: Partial<TApplicableForces>): this {
+        const forceConfig: TApplicableForces = { ...defaultApplicableForces, ..._forceConfig };
+        for (const key in forceConfig) {
+            if (Object.prototype.hasOwnProperty.call(forceConfig, key)) {
+                switch (key) {
+                    case 'gravity':
+                        if (forceConfig.gravity) {
+                            const gravity = this.p5.createVector(0, 0.02);
+                            this.velocity.add(gravity);
+                        }
+                        break;
+                    case 'wind':
+                        if (forceConfig.wind) {
+                            let f = this.p5.createVector();
+                            const wind = this.p5.createVector(0.01, 0);
+                            P5.Vector.div(wind, this.mass, f);
+                            this.velocity.add(f);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
         return this;
     }
 
-    update(deltaTime: number): this {
+    update(deltaTime: number, forceConfig: Partial<TApplicableForces>): this {
+        this.applyForces(deltaTime, forceConfig);
+
         this.accelaration = this.velocity;
         this.pos.add(this.accelaration);
+
+        this.applyEdgeBounce(deltaTime);
         return this;
     }
 

@@ -23,3 +23,9 @@ export type TEdges = {
     bottom: boolean;
     left: boolean;
 };
+
+export type TApplicableForces = {
+    gravity: boolean;
+    wind: boolean;
+    friction: boolean;
+};
