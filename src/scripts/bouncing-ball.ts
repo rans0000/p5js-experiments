@@ -51,7 +51,8 @@ const sketch = (p5: P5) => {
                 new BouncingBall(p5, collection, {
                     pos: p5.createVector(innerWidth / 2 + i * 150, innerHeight / 2),
                     r: Math.sqrt((i + 1) * 2) * 15,
-                    mass: (i + 1) * 2
+                    mass: (i + 1) * 2,
+                    mu: 0.1
                 })
             );
         }

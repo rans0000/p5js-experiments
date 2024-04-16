@@ -13,7 +13,7 @@ class Particle2D extends Entity {
     mass: number;
     velocity: P5.Vector;
     accelaration: P5.Vector;
-    forces: P5.Vector[];
+    mu: number;
 
     constructor(
         readonly p5: P5,
@@ -24,7 +24,7 @@ class Particle2D extends Entity {
             mass: 1,
             accelaration: p5.createVector(0, 0),
             velocity: p5.createVector(0, 0),
-            forces: [],
+            mu: 0.01,
             ..._config
         };
         super(p5, collection, config);
@@ -32,6 +32,7 @@ class Particle2D extends Entity {
         this.mass = config.mass;
         this.velocity = config.velocity;
         this.accelaration = config.accelaration;
+        this.mu = config.mu;
     }
 
     applyEdgeBounce(deltaTime: number, _config?: TEdges): this {
@@ -75,6 +76,18 @@ class Particle2D extends Entity {
                             P5.Vector.div(wind, this.mass, f);
                             this.velocity.add(f);
                         }
+                        break;
+                    case 'friction':
+                        const { innerHeight } = window;
+                        const diff = innerHeight - (this.pos.y + this.r);
+                        if (diff > 1) break;
+
+                        let friction = this.velocity.copy();
+                        friction.normalize();
+                        friction.mult(-1);
+                        const normal = this.mass;
+                        friction.setMag(this.mu * normal);
+                        this.velocity.add(friction);
                         break;
                     default:
                         break;

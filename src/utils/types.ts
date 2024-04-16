@@ -14,7 +14,7 @@ export type TParticle = TEntity & {
     mass?: number;
     velocity?: P5.Vector;
     accelaration?: P5.Vector;
-    forces?: P5.Vector[];
+    mu?: number; //coefficient of fricton
 };
 
 export type TEdges = {

@@ -4,14 +4,17 @@
     0% {
         transform: translate3d(min(-90%, -30rem), 0, 0);
     }
+
     100% {
         transform: translate3d(0, 0, 0);
     }
 }
+
 @keyframes slide-out {
     0% {
         transform: translate3d(0, 0, 0);
     }
+
     100% {
         transform: translate3d(min(-90%, -30rem), 0, 0);
     }
@@ -21,6 +24,7 @@
     background-image: linear-gradient(90deg, rgb(10, 34, 29), rgb(21, 51, 32));
     opacity: 0.75;
 }
+
 dialog {
     display: flex;
     flex-direction: column;
@@ -60,7 +64,12 @@ dialog[close] {
         border-bottom: 1px solid var(--text-color-light);
         width: fit-content;
     }
+
+    p {
+        line-height: 1.4;
+    }
 }
+
 .btn-dialog-close {
     width: 2rem;
     height: 2rem;
@@ -73,7 +82,9 @@ dialog[close] {
     font-size: large;
     user-select: none;
 }
+
 a.link-repo {
+
     &:link,
     &:visited {
         display: inline-block;
@@ -81,6 +92,7 @@ a.link-repo {
         font-size: small;
         margin: 1rem 0 0;
     }
+
     &:hover,
     &:focus {
         color: var(--bg-button-hover);
