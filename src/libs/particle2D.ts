@@ -32,7 +32,6 @@ class Particle2D extends Entity {
         this.mass = config.mass;
         this.velocity = config.velocity;
         this.accelaration = config.accelaration;
-        this.forces = config.forces;
     }
 
     applyEdgeBounce(deltaTime: number, _config?: TEdges): this {

@@ -29,7 +29,7 @@ class BouncingBall extends Particle2D {
 
 /* ********************************************* */
 
-const collection: Particle2D[] = [];
+const collection: Entity[] = [];
 
 const sketch = (p5: P5) => {
     const gui = new GUI({ autoPlace: false });

@@ -20,12 +20,6 @@ class Entity {
         this.r = config.r;
         collection.push(this);
     }
-    applyEdgeBounce(deltaTime: number, _config?: TEdges): this {
-        return this;
-    }
-    applyForces(deltaTime: number, forceConfig: TApplicableForces): this {
-        return this;
-    }
 
     update(deltaTime: number, options?: any): this {
         return this;
