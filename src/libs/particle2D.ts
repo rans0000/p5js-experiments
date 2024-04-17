@@ -5,8 +5,9 @@ import Entity from './entity';
 
 const defaultApplicableForces: TApplicableForces = {
     gravity: true,
-    wind: true,
-    friction: true
+    wind: false,
+    friction: true,
+    drag: false
 };
 
 class Particle2D extends Entity {
@@ -14,6 +15,7 @@ class Particle2D extends Entity {
     velocity: P5.Vector;
     accelaration: P5.Vector;
     mu: number;
+    c: number;
 
     constructor(
         readonly p5: P5,
@@ -24,7 +26,8 @@ class Particle2D extends Entity {
             mass: 1,
             accelaration: p5.createVector(0, 0),
             velocity: p5.createVector(0, 0),
-            mu: 0.01,
+            mu: 0.01, // coefficient of friction
+            c: 0.1, // coefficient of drag
             ..._config
         };
         super(p5, collection, config);
@@ -33,6 +36,7 @@ class Particle2D extends Entity {
         this.velocity = config.velocity;
         this.accelaration = config.accelaration;
         this.mu = config.mu;
+        this.c = config.c;
     }
 
     applyEdgeBounce(deltaTime: number, _config?: TEdges): this {
@@ -62,6 +66,7 @@ class Particle2D extends Entity {
         const forceConfig: TApplicableForces = { ...defaultApplicableForces, ..._forceConfig };
         for (const key in forceConfig) {
             if (Object.prototype.hasOwnProperty.call(forceConfig, key)) {
+                const { innerHeight } = window;
                 switch (key) {
                     case 'gravity':
                         if (forceConfig.gravity) {
@@ -77,10 +82,19 @@ class Particle2D extends Entity {
                             this.velocity.add(f);
                         }
                         break;
+
+                    case 'drag':
+                        if (!forceConfig.drag || this.pos.y < innerHeight / 2) break;
+                        let drag = this.velocity.copy();
+                        drag.normalize();
+                        drag.mult(-1);
+                        let speedSquare = this.velocity.magSq();
+                        drag.setMag(this.c * speedSquare);
+                        this.velocity.add(drag);
+                        break;
                     case 'friction':
-                        const { innerHeight } = window;
                         const diff = innerHeight - (this.pos.y + this.r);
-                        if (diff > 1) break;
+                        if (diff > 1 || !forceConfig.friction) break;
 
                         let friction = this.velocity.copy();
                         friction.normalize();

@@ -15,6 +15,7 @@ export type TParticle = TEntity & {
     velocity?: P5.Vector;
     accelaration?: P5.Vector;
     mu?: number; //coefficient of fricton
+    c?: number; //coefficient of drag
 };
 
 export type TEdges = {
@@ -28,4 +29,5 @@ export type TApplicableForces = {
     gravity: boolean;
     wind: boolean;
     friction: boolean;
+    drag: boolean;
 };
