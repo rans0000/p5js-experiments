@@ -7,3 +7,8 @@ export const defaultEdgeConfig: TEdges = {
     bottom: true,
     left: true
 };
+export enum MOUSE_BTN {
+    LEFT,
+    MIDDLE,
+    RIGHT
+}

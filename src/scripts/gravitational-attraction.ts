@@ -1,19 +1,35 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
+import { MOUSE_BTN } from '../utils/utils';
 
 let movers: Mover[] = [];
 let attractors: Attractor[] = [];
-const moverCount = 10;
 
 const sketch = (p5: P5) => {
+    const options = {
+        moverCount: 10,
+        clear: () => {
+            init(p5);
+            const { innerWidth, innerHeight } = window;
+            attractors.push(new Attractor(p5, innerWidth / 2, innerHeight / 2, 20));
+        }
+    };
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
+    gui.add(options, 'clear').name('Clear Attractors');
+    gui.add(options, 'moverCount', 1, 30, 1)
+        .name('Mover Count')
+        .onChange(() => {
+            init(p5);
+        });
 
     /** setup */
     p5.setup = () => {
-        const { innerWidth, innerHeight } = window;
         const canvas = p5.createCanvas(window.innerWidth, window.innerHeight);
+        document.oncontextmenu = function () {
+            return false; // remove context menu
+        };
         canvas.parent('app');
         p5.background('white');
         p5.pixelDensity(1);
@@ -25,32 +41,44 @@ const sketch = (p5: P5) => {
 
     /** draw */
     p5.draw = () => {
-        p5.background(0, 0.1);
-        for (let i = 0; i < moverCount; i++) {
+        p5.background(200, 60, 10, 0.2);
+        for (let i = 0; i < movers.length; i++) {
             movers[i].update();
             movers[i].show();
-
-            attractors[0].attract(movers[i]);
-            attractors[0].show();
+        }
+        for (let i = 0; i < attractors.length; i++) {
+            for (let j = 0; j < movers.length; j++) {
+                attractors[i].attract(movers[j]);
+                attractors[i].show();
+            }
         }
     };
-};
 
-/**--------------------------------- */
-// functions
+    p5.mouseReleased = (event: MouseEvent) => {
+        const { clientX, clientY, button } = event;
+        attractors.push(new Attractor(p5, clientX, clientY, 20, button === MOUSE_BTN.LEFT));
+        return false;
+    };
 
-function resizeDisplay(canvas: P5) {
-    canvas.resizeCanvas(window.innerWidth, window.innerHeight);
-}
+    /**--------------------------------- */
+    // functions
 
-function init(p5: P5) {
-    const { innerWidth, innerHeight } = window;
-    for (let i = 0; i < 10; i++) {
-        const mover = new Mover(p5, p5.random(innerWidth), p5.random(innerHeight), 10);
-        movers.push(mover);
+    function resizeDisplay(canvas: P5) {
+        canvas.resizeCanvas(window.innerWidth, window.innerHeight);
     }
-    attractors.push(new Attractor(p5, innerWidth / 2, innerHeight / 2, 10));
-}
+
+    function init(p5: P5) {
+        p5.background(200, 60, 10);
+        const { innerWidth, innerHeight } = window;
+        movers = [];
+        attractors = [];
+        for (let i = 0; i < options.moverCount; i++) {
+            const mover = new Mover(p5, p5.random(innerWidth), p5.random(innerHeight), 20);
+            movers.push(mover);
+        }
+        attractors.push(new Attractor(p5, innerWidth / 2, innerHeight / 2, 10));
+    }
+};
 
 /**--------------------------------- */
 // classes
@@ -95,23 +123,25 @@ class Attractor {
     p5: P5;
     pos: P5.Vector;
     mass: number;
+    isAttractor: boolean;
 
-    constructor(p5, x, y, m) {
+    constructor(p5, x, y, m, isAttractor = true) {
         this.p5 = p5;
         this.pos = this.p5.createVector(x, y);
         this.mass = m;
+        this.isAttractor = isAttractor;
     }
 
     show() {
-        this.p5.stroke(0);
-        this.p5.fill('#ff0000');
-        this.p5.ellipse(this.pos.x, this.pos.y, this.p5.sqrt(this.mass) * 2);
+        this.p5.noStroke();
+        this.p5.fill(this.isAttractor ? '#00ff00' : '#ff0000');
+        this.p5.ellipse(this.pos.x, this.pos.y, this.p5.sqrt(this.mass) * 5);
     }
     attract(mover: Mover) {
         let force = P5.Vector.sub(this.pos, mover.pos);
         let distanceSq = this.p5.constrain(force.magSq(), 25, 2500);
         const G = 0.5;
-        const magnitude = G * ((this.mass * mover.mass) / distanceSq);
+        const magnitude = G * ((this.mass * mover.mass) / distanceSq) * (this.isAttractor ? 1 : -1);
         force.setMag(magnitude);
         mover.applyForces(force);
     }
