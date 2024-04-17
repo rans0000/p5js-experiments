@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Gravitational Attraction - P5JS</title>
+        <link rel="stylesheet" href="./scss/styles.scss" />
+    </head>
+    <body class="body__fullscreen">
+        <header>
+            <h1>
+                <span>P5JS Experiments</span>
+                <span>Gravitational Attraction</span>
+            </h1>
+            <button class="btn-dialog">More Info</button>
+            <dialog>
+                <div class="dialog-wrapper">
+                    <button autofocus class="btn-dialog-close">&times;</button>
+                    <h1>Gravitational Attraction</h1>
+                    <p>
+                        This is a simple Gravitational Attraction implimentation in 2D.
+                        <br />
+                        An attractor object exerts a graviatational force on a number of mover objects.
+                    </p>
+                    <a class="link-repo" target="_blank" href="https://github.com/rans0000/p5js-experiments">Github repo</a>
+                </div>
+            </dialog>
+        </header>
+        <main id="app"></main>
+        <span id="gui"></span>
+        <footer>
+            A bunch of creative coding experiments using p5JS.
+            <a href="https://github.com/rans0000" target="_blank">https://github.com/rans0000</a>
+        </footer>
+        <script type="module" src="./scripts/dialog.ts"></script>
+        <script type="module" src="./scripts/gravitational-attraction.ts"></script>
+    </body>
+</html>
