@@ -31,3 +31,14 @@ export type TApplicableForces = {
     friction: boolean;
     drag: boolean;
 };
+
+export type TAutonomousAgentConfig = {
+    pos: P5.Vector;
+    mass: number;
+    velocity: P5.Vector;
+    acceleration: P5.Vector;
+    maxSpeed: number;
+    maxForce: number;
+    r: number;
+    material: P5.Color;
+};
