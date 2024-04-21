@@ -97,6 +97,14 @@ class AutonomousAgent {
         if (target === null) return null;
         return this.seek(target)!.mult(-1);
     }
+
+    pursuit(agent: AutonomousAgent) {
+        const target = agent.pos.copy();
+        let predictedPos = agent.velocity.copy();
+        predictedPos.mult(40);
+        target.add(predictedPos);
+        return this.seek(target);
+    }
 }
 
 export default AutonomousAgent;
