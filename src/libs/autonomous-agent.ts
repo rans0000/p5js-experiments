@@ -98,12 +98,18 @@ class AutonomousAgent {
         return this.seek(target)!.mult(-1);
     }
 
-    pursuit(agent: AutonomousAgent) {
+    pursue(agent: AutonomousAgent) {
         const target = agent.pos.copy();
         let predictedPos = agent.velocity.copy();
         predictedPos.mult(40);
         target.add(predictedPos);
         return this.seek(target);
+    }
+
+    evade(agent: AutonomousAgent) {
+        let a = this.pursue(agent);
+        a!.mult(-1);
+        return a;
     }
 }
 

@@ -5,7 +5,7 @@ import { MOUSE_BTN } from '../utils/utils';
 
 /**--------------------------------- */
 // variables & types
-type TMode = 'Seek' | 'Flee' | 'Pursuit';
+type TMode = 'Seek' | 'Flee' | 'Pursuit' | 'Evade';
 let agents: AutonomousAgent[] = [];
 let target: P5.Vector | null = null;
 
@@ -22,7 +22,7 @@ const sketch = (p5: P5) => {
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
-    gui.add(options, 'mode', ['Seek', 'Flee', 'Pursuit'])
+    gui.add(options, 'mode', ['Seek', 'Flee', 'Pursuit', 'Evade'])
         .name('Example Type')
         .onChange((val: TMode) => {
             init(p5);
@@ -69,6 +69,9 @@ const sketch = (p5: P5) => {
             case 'Pursuit':
                 pursuit();
                 break;
+            case 'Evade':
+                evade();
+                break;
             default:
                 break;
         }
@@ -80,6 +83,7 @@ const sketch = (p5: P5) => {
             case 'Seek':
             case 'Flee':
             case 'Pursuit':
+            case 'Evade':
                 target = p5.createVector(e.clientX, e.clientY);
                 break;
             default:
@@ -107,6 +111,9 @@ const sketch = (p5: P5) => {
                 break;
             case 'Pursuit':
                 initPursuit(p5);
+                break;
+            case 'Evade':
+                initEvade(p5);
                 break;
             default:
                 break;
@@ -150,29 +157,61 @@ const sketch = (p5: P5) => {
     }
 
     function initPursuit(p5: P5) {
-        const attacker = new AutonomousAgent(p5, {
+        const player = new AutonomousAgent(p5, {
             pos: p5.createVector(window.innerWidth, window.innerHeight),
             maxSpeed: options.maxSpeed,
             maxForce: options.maxForce
         });
-        const runner = new AutonomousAgent(p5, {
+        const aiBot = new AutonomousAgent(p5, {
             pos: p5.createVector(200, 300),
             maxSpeed: 4,
             maxForce: 0.3,
             material: p5.color('#0000ff')
         });
-        agents = [attacker, runner];
+        agents = [player, aiBot];
         target = target || p5.createVector(window.innerWidth / 2, window.innerHeight / 2);
     }
 
     function pursuit() {
-        const attacker = agents[0];
+        const player = agents[0];
+        const aiBot = agents[1];
+
+        const seek = aiBot.seek(target);
+        aiBot.applyForces(seek);
+        const attack = player.pursue(aiBot);
+        player.applyForces(attack);
+        console.log(agents.length);
+
+        for (let i = 0; i < agents.length; i++) {
+            agents[i].update();
+            agents[i].draw(options.showHelpers);
+        }
+    }
+
+    function initEvade(p5: P5) {
+        const player = new AutonomousAgent(p5, {
+            pos: p5.createVector(300, 300),
+            maxSpeed: options.maxSpeed,
+            maxForce: options.maxForce
+        });
+        const runner = new AutonomousAgent(p5, {
+            pos: p5.createVector(400, 300),
+            maxSpeed: 2,
+            maxForce: 0.1,
+            material: p5.color('#0000ff')
+        });
+        agents = [player, runner];
+        target = target || p5.createVector(window.innerWidth / 2, window.innerHeight / 2);
+    }
+
+    function evade() {
+        const player = agents[0];
         const runner = agents[1];
 
-        const flee = runner.seek(target);
-        runner.applyForces(flee);
-        const attack = attacker.pursuit(runner);
-        attacker.applyForces(attack);
+        const seek = player.seek(target);
+        player.applyForces(seek);
+        const force = runner.evade(player);
+        runner.applyForces(force);
 
         for (let i = 0; i < agents.length; i++) {
             agents[i].update();
