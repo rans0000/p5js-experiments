@@ -92,6 +92,11 @@ class AutonomousAgent {
         force.limit(this.maxForce);
         return force;
     }
+
+    flee(target: P5.Vector | null) {
+        if (target === null) return null;
+        return this.seek(target)!.mult(-1);
+    }
 }
 
 export default AutonomousAgent;
