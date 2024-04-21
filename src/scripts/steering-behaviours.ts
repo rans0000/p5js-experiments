@@ -12,12 +12,20 @@ let target: P5.Vector | null = null;
 // sketch
 const sketch = (p5: P5) => {
     const options = {
-        showHelpers: false
+        showHelpers: false,
+        maxSpeed: 4,
+        maxForce: 0.1
     };
 
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     gui.add(options, 'showHelpers');
+    gui.add(options, 'maxSpeed', 0.1, 10, 0.1).onChange((val) =>
+        agents.forEach((agent) => agent.setValues('maxSpeed', val))
+    );
+    gui.add(options, 'maxForce', 0.01, 2, 0.01).onChange((val) =>
+        agents.forEach((agent) => agent.setValues('maxForce', val))
+    );
     document.getElementById('gui')?.appendChild(gui.domElement);
 
     /** setup */
@@ -61,7 +69,13 @@ const sketch = (p5: P5) => {
     function init(p5: P5) {
         p5.background(200, 60, 10);
 
-        agents.push(new AutonomousAgent(p5, { pos: p5.createVector(200, 300) }));
+        agents.push(
+            new AutonomousAgent(p5, {
+                pos: p5.createVector(200, 300),
+                maxSpeed: options.maxSpeed,
+                maxForce: options.maxForce
+            })
+        );
     }
 
     function drawTarget(target) {

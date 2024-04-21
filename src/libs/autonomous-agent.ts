@@ -1,6 +1,7 @@
 import P5 from 'p5';
 import { TAutonomousAgentConfig } from '../utils/types';
 
+type Keys = 'maxSpeed' | 'maxForce';
 class AutonomousAgent {
     p5: P5;
     pos: P5.Vector;
@@ -33,6 +34,19 @@ class AutonomousAgent {
         this.maxForce = config.maxForce;
         this.r = config.r;
         this.material = config.material;
+    }
+
+    setValues(key: Keys, value: number) {
+        switch (key) {
+            case 'maxSpeed':
+                this.maxSpeed = value;
+                break;
+            case 'maxForce':
+                this.maxForce = value;
+                break;
+            default:
+                throw 'Unsupported key passed to setValues()';
+        }
     }
 
     draw(showHelper: boolean = false) {
