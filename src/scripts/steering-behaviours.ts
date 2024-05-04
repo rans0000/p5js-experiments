@@ -5,7 +5,7 @@ import { MOUSE_BTN } from '../utils/utils';
 
 /**--------------------------------- */
 // variables & types
-type TMode = 'Seek' | 'Flee' | 'Pursuit' | 'Evade';
+type TMode = 'Seek' | 'Flee' | 'Pursuit' | 'Evade' | 'Arrive';
 let agents: AutonomousAgent[] = [];
 let target: P5.Vector | null = null;
 
@@ -22,7 +22,7 @@ const sketch = (p5: P5) => {
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
-    gui.add(options, 'mode', ['Seek', 'Flee', 'Pursuit', 'Evade'])
+    gui.add(options, 'mode', ['Seek', 'Flee', 'Pursuit', 'Evade', 'Arrive'])
         .name('Example Type')
         .onChange((val: TMode) => {
             init(p5);
@@ -71,6 +71,8 @@ const sketch = (p5: P5) => {
                 break;
             case 'Evade':
                 evade();
+            case 'Arrive':
+                arrive();
                 break;
             default:
                 break;
@@ -84,6 +86,7 @@ const sketch = (p5: P5) => {
             case 'Flee':
             case 'Pursuit':
             case 'Evade':
+            case 'Arrive':
                 target = p5.createVector(e.clientX, e.clientY);
                 break;
             default:
@@ -114,6 +117,9 @@ const sketch = (p5: P5) => {
                 break;
             case 'Evade':
                 initEvade(p5);
+                break;
+            case 'Arrive':
+                initArrive(p5);
                 break;
             default:
                 break;
@@ -180,7 +186,6 @@ const sketch = (p5: P5) => {
         aiBot.applyForces(seek);
         const attack = player.pursue(aiBot);
         player.applyForces(attack);
-        console.log(agents.length);
 
         for (let i = 0; i < agents.length; i++) {
             agents[i].update();
@@ -212,6 +217,28 @@ const sketch = (p5: P5) => {
         player.applyForces(seek);
         const force = runner.evade(player);
         runner.applyForces(force);
+
+        for (let i = 0; i < agents.length; i++) {
+            agents[i].update();
+            agents[i].draw(options.showHelpers);
+        }
+    }
+
+    function initArrive(p5: P5) {
+        const player = new AutonomousAgent(p5, {
+            pos: p5.createVector(300, 300),
+            maxSpeed: options.maxSpeed,
+            maxForce: options.maxForce
+        });
+        agents = [player];
+        target = target || p5.createVector(window.innerWidth / 2, window.innerHeight / 2);
+    }
+
+    function arrive() {
+        const player = agents[0];
+
+        const arrive = player.arrive(target);
+        player.applyForces(arrive);
 
         for (let i = 0; i < agents.length; i++) {
             agents[i].update();

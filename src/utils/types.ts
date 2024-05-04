@@ -39,6 +39,7 @@ export type TAutonomousAgentConfig = {
     acceleration: P5.Vector;
     maxSpeed: number;
     maxForce: number;
+    breakingThreshold: number;
     r: number;
     material: P5.Color;
 };

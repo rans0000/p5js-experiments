@@ -10,6 +10,7 @@ class AutonomousAgent {
     acceleration: P5.Vector;
     maxSpeed: number;
     maxForce: number;
+    breakingThreshold: number;
     r: number;
     material: P5.Color;
 
@@ -19,8 +20,9 @@ class AutonomousAgent {
             mass: 1,
             velocity: p5.createVector(0, 0),
             acceleration: p5.createVector(0, 0),
-            maxSpeed: 4,
+            maxSpeed: 15,
             maxForce: 0.25,
+            breakingThreshold: 100,
             r: 20,
             material: p5.color('#00ffff')
         };
@@ -32,6 +34,7 @@ class AutonomousAgent {
         this.acceleration = config.acceleration;
         this.maxSpeed = config.maxSpeed;
         this.maxForce = config.maxForce;
+        this.breakingThreshold = config.breakingThreshold;
         this.r = config.r;
         this.material = config.material;
     }
@@ -84,10 +87,19 @@ class AutonomousAgent {
         this.p5.line(0, 0, temp.x, temp.y);
     }
 
-    seek(target: P5.Vector | null) {
+    seek(target: P5.Vector | null, isArriving: boolean = false) {
         if (!target) return null;
         let force = P5.Vector.sub(target, this.pos);
-        force.setMag(this.maxSpeed);
+        let desiredVelocity = this.maxSpeed;
+
+        if (isArriving) {
+            const distance = force.mag();
+            if (distance < this.breakingThreshold) {
+                desiredVelocity = this.p5.map(distance, 0, this.breakingThreshold, 0, this.maxSpeed);
+            }
+        }
+
+        force.setMag(desiredVelocity);
         force.sub(this.velocity);
         force.limit(this.maxForce);
         return force;
@@ -110,6 +122,10 @@ class AutonomousAgent {
         let a = this.pursue(agent);
         a!.mult(-1);
         return a;
+    }
+
+    arrive(target: P5.Vector | null) {
+        return this.seek(target, true);
     }
 }
 
