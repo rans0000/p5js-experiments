@@ -10,6 +10,7 @@ class AutonomousAgent {
     acceleration: P5.Vector;
     maxSpeed: number;
     maxForce: number;
+    wanderTheta: number;
     breakingThreshold: number;
     r: number;
     material: P5.Color;
@@ -22,6 +23,7 @@ class AutonomousAgent {
             acceleration: p5.createVector(0, 0),
             maxSpeed: 15,
             maxForce: 0.25,
+            wanderTheta: 0,
             breakingThreshold: 100,
             r: 20,
             material: p5.color('#00ffff')
@@ -34,9 +36,12 @@ class AutonomousAgent {
         this.acceleration = config.acceleration;
         this.maxSpeed = config.maxSpeed;
         this.maxForce = config.maxForce;
+        this.wanderTheta = config.wanderTheta;
         this.breakingThreshold = config.breakingThreshold;
         this.r = config.r;
         this.material = config.material;
+
+        this.wanderTheta = 0;
     }
 
     setValues(key: Keys, value: number) {
@@ -126,6 +131,31 @@ class AutonomousAgent {
 
     arrive(target: P5.Vector | null) {
         return this.seek(target, true);
+    }
+
+    wander() {
+        const lookahead = 100;
+        const lookaheadRadius = 50;
+        const deltaTheta = this.p5.PI / 6;
+
+        const x = lookaheadRadius * this.p5.cos(this.wanderTheta);
+        const y = lookaheadRadius * this.p5.sin(this.wanderTheta);
+        const targetPos = this.velocity.copy().setMag(lookahead);
+        targetPos.add(this.p5.createVector(x, y));
+        targetPos.add(this.pos);
+
+        this.constraintWithinWindow(this.pos.x, this.pos.y);
+
+        this.wanderTheta += this.p5.random(-deltaTheta, deltaTheta);
+        return this.seek(targetPos);
+    }
+
+    constraintWithinWindow(x, y) {
+        const { innerWidth, innerHeight } = window;
+        if (x < 0) this.pos.x = innerWidth;
+        if (x > innerWidth) this.pos.x = 0;
+        if (y < 0) this.pos.y = innerHeight;
+        if (y > innerHeight) this.pos.y = 0;
     }
 }
 

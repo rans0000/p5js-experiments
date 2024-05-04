@@ -5,7 +5,7 @@ import { MOUSE_BTN } from '../utils/utils';
 
 /**--------------------------------- */
 // variables & types
-type TMode = 'Seek' | 'Flee' | 'Pursuit' | 'Evade' | 'Arrive';
+type TMode = 'Seek' | 'Flee' | 'Pursuit' | 'Evade' | 'Arrive' | 'Wander';
 let agents: AutonomousAgent[] = [];
 let target: P5.Vector | null = null;
 
@@ -16,13 +16,13 @@ const sketch = (p5: P5) => {
         showHelpers: false,
         maxSpeed: 4,
         maxForce: 0.1,
-        mode: 'Seek' as TMode
+        mode: 'Wander' as TMode
     };
 
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
-    gui.add(options, 'mode', ['Seek', 'Flee', 'Pursuit', 'Evade', 'Arrive'])
+    gui.add(options, 'mode', ['Seek', 'Flee', 'Pursuit', 'Evade', 'Arrive', 'Wander'])
         .name('Example Type')
         .onChange((val: TMode) => {
             init(p5);
@@ -71,8 +71,12 @@ const sketch = (p5: P5) => {
                 break;
             case 'Evade':
                 evade();
+                break;
             case 'Arrive':
                 arrive();
+                break;
+            case 'Wander':
+                wander();
                 break;
             default:
                 break;
@@ -88,6 +92,9 @@ const sketch = (p5: P5) => {
             case 'Evade':
             case 'Arrive':
                 target = p5.createVector(e.clientX, e.clientY);
+                break;
+            case 'Wander':
+                target = null;
                 break;
             default:
                 break;
@@ -120,6 +127,9 @@ const sketch = (p5: P5) => {
                 break;
             case 'Arrive':
                 initArrive(p5);
+                break;
+            case 'Wander':
+                initWander(p5);
                 break;
             default:
                 break;
@@ -239,6 +249,28 @@ const sketch = (p5: P5) => {
 
         const arrive = player.arrive(target);
         player.applyForces(arrive);
+
+        for (let i = 0; i < agents.length; i++) {
+            agents[i].update();
+            agents[i].draw(options.showHelpers);
+        }
+    }
+
+    function initWander(p5: P5) {
+        const player = new AutonomousAgent(p5, {
+            pos: p5.createVector(window.innerWidth / 2, window.innerHeight / 2),
+            maxSpeed: options.maxSpeed,
+            maxForce: options.maxForce
+        });
+        agents = [player];
+        target = null;
+    }
+
+    function wander() {
+        const player = agents[0];
+
+        const wander = player.wander();
+        player.applyForces(wander);
 
         for (let i = 0; i < agents.length; i++) {
             agents[i].update();
