@@ -44,3 +44,5 @@ export type TAutonomousAgentConfig = {
     r: number;
     material: P5.Color;
 };
+
+export type TPoints = P5.Vector[];
