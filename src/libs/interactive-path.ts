@@ -9,7 +9,7 @@ class InteractivePath {
 
     constructor(p5: P5) {
         this.p5 = p5;
-        this.mode = 'draw';
+        this.mode = 'view';
         this.points = [];
         this.paintRef = this.paint.bind(this);
     }
@@ -32,6 +32,7 @@ class InteractivePath {
     }
 
     startPainting() {
+        if (this.mode === 'draw') return this;
         this.mode = 'draw';
         this.points.push([]);
         this.p5.canvas.addEventListener('click', this.paintRef);
@@ -39,6 +40,7 @@ class InteractivePath {
     }
 
     stopPainting() {
+        if (this.mode === 'view') return this;
         this.mode = 'view';
         this.p5.canvas.removeEventListener('click', this.paintRef);
         return this;

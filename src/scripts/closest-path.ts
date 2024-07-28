@@ -2,16 +2,39 @@ import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import InteractivePath from '../libs/interactive-path';
 import { MOUSE_BTN } from '../utils/utils';
-import { TPoints } from 'src/utils/types';
 
 /* ********************************************* */
-
-const collection: InteractivePath[] = [];
-
+type TMode = 'view' | 'draw';
+let collection: InteractivePath[] = [];
 const sketch = (p5: P5) => {
+    let options = {
+        mode: 'view' as TMode,
+        clear: clear
+    };
+
+    function clear() {
+        path.setPoints([]);
+    }
+
+    function toggleDrawMode(mode: TMode) {
+        console.log(mode);
+        switch (mode) {
+            case 'view':
+                path?.stopPainting();
+                break;
+            case 'draw':
+                path?.startPainting();
+                break;
+            default:
+                break;
+        }
+    }
+
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
+    gui.add(options, 'mode', ['view', 'draw']).onChange(toggleDrawMode);
+    gui.add(options, 'clear').name('Clear');
 
     let path: InteractivePath;
 
@@ -34,8 +57,15 @@ const sketch = (p5: P5) => {
 
     p5.mouseReleased = (event: MouseEvent) => {
         switch (event.button) {
-            case MOUSE_BTN.MIDDLE:
-                path.togglePainting();
+            case MOUSE_BTN.LEFT:
+                if (options.mode === 'draw') {
+                    path?.startPainting();
+                }
+                break;
+            case MOUSE_BTN.RIGHT:
+                if (options.mode === 'draw') {
+                    path?.stopPainting();
+                }
                 break;
             default:
                 break;
