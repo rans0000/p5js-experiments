@@ -62,7 +62,7 @@ class Particle2D extends Entity {
         return this;
     }
 
-    applyForces(deltaTime, _forceConfig: Partial<TApplicableForces>): this {
+    applyForces(deltaTime: number, _forceConfig: Partial<TApplicableForces>): this {
         const forceConfig: TApplicableForces = { ...defaultApplicableForces, ..._forceConfig };
         for (const key in forceConfig) {
             if (Object.prototype.hasOwnProperty.call(forceConfig, key)) {

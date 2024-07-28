@@ -91,7 +91,7 @@ class Mover {
     accelaration: P5.Vector;
     r: number;
 
-    constructor(p5, x, y, m, velocity = P5.Vector.random2D()) {
+    constructor(p5: P5, x: number, y: number, m: number, velocity = P5.Vector.random2D()) {
         this.p5 = p5;
         this.pos = this.p5.createVector(x, y);
         this.velocity = velocity;
@@ -125,7 +125,7 @@ class Attractor {
     mass: number;
     isAttractor: boolean;
 
-    constructor(p5, x, y, m, isAttractor = true) {
+    constructor(p5: P5, x: number, y: number, m: number, isAttractor = true) {
         this.p5 = p5;
         this.pos = this.p5.createVector(x, y);
         this.mass = m;

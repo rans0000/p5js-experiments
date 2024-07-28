@@ -94,7 +94,7 @@ const sketch = (p5: P5) => {
         tileSize: number;
         tiles: Tile[];
 
-        constructor(p5: P5, terrainSize, tileSize) {
+        constructor(p5: P5, terrainSize: number, tileSize: number) {
             this.p5 = p5;
             this.terrainSize = terrainSize;
             this.tileSize = tileSize;
@@ -108,8 +108,6 @@ const sketch = (p5: P5) => {
 
         buildTiles() {
             this.tiles = [];
-            const { innerWidth, innerHeight } = window;
-
             for (let i = 0; i < this.terrainSize; i++) {
                 for (let j = 0; j < this.terrainSize; j++) {
                     this.p5.noiseDetail(options.detail, options.difference);

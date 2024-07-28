@@ -278,7 +278,7 @@ const sketch = (p5: P5) => {
         }
     }
 
-    function drawTarget(target) {
+    function drawTarget(target: P5.Vector | null) {
         if (!target) return;
 
         p5.push();

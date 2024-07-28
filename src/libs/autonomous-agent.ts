@@ -150,7 +150,7 @@ class AutonomousAgent {
         return this.seek(targetPos);
     }
 
-    constraintWithinWindow(x, y) {
+    constraintWithinWindow(x: number, y: number) {
         const { innerWidth, innerHeight } = window;
         if (x < 0) this.pos.x = innerWidth;
         if (x > innerWidth) this.pos.x = 0;
