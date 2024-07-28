@@ -14,6 +14,11 @@ class InteractivePath {
         this.paintRef = this.paint.bind(this);
     }
 
+    setPoints(points: TPoints[]) {
+        this.points = points;
+        return this.stopPainting();
+    }
+
     addPoint(point: P5.Vector) {
         const lineIndex = this.points.length;
         this.points[lineIndex].push(point.copy());

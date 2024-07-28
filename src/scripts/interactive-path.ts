@@ -2,6 +2,7 @@ import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import InteractivePath from '../libs/interactive-path';
 import { MOUSE_BTN } from '../utils/utils';
+import { TPoints } from 'src/utils/types';
 
 /* ********************************************* */
 
@@ -28,6 +29,8 @@ const sketch = (p5: P5) => {
         };
 
         path = new InteractivePath(p5);
+        const points: TPoints[] = [[p5.createVector(20, 200), p5.createVector(200, 400), p5.createVector(400, 50)]];
+        path.setPoints(points);
         collection.push(path);
     };
 
