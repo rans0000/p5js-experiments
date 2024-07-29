@@ -19,6 +19,44 @@ class InteractivePath {
         return this.stopPainting();
     }
 
+    getPoints() {
+        return this.points;
+    }
+
+    getClosestSegment(x: number, y: number): { length?: number; intersectionPosition?: P5.Vector } {
+        const queryPoint = this.p5.createVector(x, y);
+        let shortestLength: number | undefined = undefined;
+        let shortestPoint: P5.Vector | undefined;
+        const points = this.getPoints();
+        const numberOfLines = points.length;
+
+        this.p5.angleMode(this.p5.RADIANS);
+        this.p5.colorMode(this.p5.HSB);
+
+        for (let i = 0; i < numberOfLines; i++) {
+            const segmentLength = points[i].length;
+            for (let j = 1; j < segmentLength; j++) {
+                const line = P5.Vector.sub(points[i][j], points[i][j - 1]);
+                const mouse = P5.Vector.sub(queryPoint, points[i][j - 1]);
+                const projection = mouse.dot(line);
+                const projectionVector = line
+                    .copy()
+                    .normalize()
+                    .setMag(this.p5.constrain(projection / line.magSq(), 0, 1) * line.mag());
+                const projectionPos = projectionVector.copy().add(points[i][j - 1]);
+                const distanceToSegment = projectionPos.copy().sub(queryPoint).magSq();
+                if (shortestLength === undefined || distanceToSegment < shortestLength) {
+                    shortestLength = distanceToSegment;
+                    shortestPoint = projectionPos;
+                }
+            }
+        }
+        return {
+            length: shortestLength,
+            intersectionPosition: shortestPoint
+        };
+    }
+
     addPoint(point: P5.Vector) {
         const lineIndex = this.points.length;
         this.points[lineIndex].push(point.copy());
