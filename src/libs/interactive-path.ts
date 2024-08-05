@@ -3,7 +3,8 @@ import { TInteractivePathConfig, TPoints } from 'src/utils/types';
 
 const defaultConfig: TInteractivePathConfig = {
     radius: 2,
-    color: 100
+    color: 100,
+    isClosed: false
 };
 class InteractivePath {
     p5: P5;
@@ -12,8 +13,9 @@ class InteractivePath {
     paintRef: any;
     radius: number;
     color: number;
+    isClosed: boolean;
 
-    constructor(p5: P5, _config?: TInteractivePathConfig) {
+    constructor(p5: P5, _config?: Partial<TInteractivePathConfig>) {
         const config = { ...defaultConfig, ..._config };
         this.p5 = p5;
         this.mode = 'view';
@@ -21,6 +23,7 @@ class InteractivePath {
         this.paintRef = this.paint.bind(this);
         this.radius = config.radius;
         this.color = config.color;
+        this.isClosed = config.isClosed;
     }
 
     setPoints(points: TPoints[]) {
@@ -114,14 +117,23 @@ class InteractivePath {
         const numberOfLines = this.points.length;
         this.p5.stroke(this.color);
         this.p5.strokeWeight(this.radius * 2);
+
         for (let i = 0; i < numberOfLines; i++) {
             const length = this.points[i].length;
             this.p5.noFill();
             this.p5.beginShape();
             for (let j = 0; j < length; j++) {
+                this.p5.circle(this.points[i][j].x, this.points[i][j].y, 10);
                 this.p5.vertex(this.points[i][j].x, this.points[i][j].y);
             }
-            this.p5.endShape();
+
+            // decide if the line should render as closed
+            const shouldClose =
+                (this.isClosed && this.mode == 'draw' && numberOfLines > 1 && i !== numberOfLines - 1) ||
+                (this.isClosed && this.mode == 'view');
+            this.p5.endShape(shouldClose ? 'close' : undefined);
+
+            // draw the trailing line to the mouse while in the 'draw' mode
             i == numberOfLines - 1 &&
                 length > 0 &&
                 this.mode == 'draw' &&

@@ -48,6 +48,7 @@ export type TAutonomousAgentConfig = {
 export type TInteractivePathConfig = {
     radius: number;
     color: number;
+    isClosed: boolean;
 };
 
 export type TPoints = P5.Vector[];
