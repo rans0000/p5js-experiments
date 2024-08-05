@@ -1,4 +1,4 @@
-import P5 from 'p5';
+import P5, { Color } from 'p5';
 
 export enum TEntityType {
     ENTITY,
@@ -43,6 +43,11 @@ export type TAutonomousAgentConfig = {
     breakingThreshold: number;
     r: number;
     material: P5.Color;
+};
+
+export type TInteractivePathConfig = {
+    radius: number;
+    color: number;
 };
 
 export type TPoints = P5.Vector[];

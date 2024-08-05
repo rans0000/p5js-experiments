@@ -1,17 +1,26 @@
 import P5 from 'p5';
-import { TPoints } from 'src/utils/types';
+import { TInteractivePathConfig, TPoints } from 'src/utils/types';
 
+const defaultConfig: TInteractivePathConfig = {
+    radius: 2,
+    color: 100
+};
 class InteractivePath {
     p5: P5;
     mode: 'draw' | 'view';
     points: TPoints[];
     paintRef: any;
+    radius: number;
+    color: number;
 
-    constructor(p5: P5) {
+    constructor(p5: P5, _config?: TInteractivePathConfig) {
+        const config = { ...defaultConfig, ..._config };
         this.p5 = p5;
         this.mode = 'view';
         this.points = [];
         this.paintRef = this.paint.bind(this);
+        this.radius = config.radius;
+        this.color = config.color;
     }
 
     setPoints(points: TPoints[]) {
@@ -103,8 +112,8 @@ class InteractivePath {
 
     draw() {
         const numberOfLines = this.points.length;
-        this.p5.stroke(128);
-        this.p5.strokeWeight(3);
+        this.p5.stroke(this.color);
+        this.p5.strokeWeight(this.radius * 2);
         for (let i = 0; i < numberOfLines; i++) {
             const length = this.points[i].length;
             this.p5.noFill();
