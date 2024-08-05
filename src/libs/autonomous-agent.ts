@@ -64,6 +64,7 @@ class AutonomousAgent {
         this.p5.rotate(this.velocity.heading());
         this.drawSprite();
         this.p5.pop();
+        return this;
     }
 
     update() {
@@ -71,11 +72,13 @@ class AutonomousAgent {
         this.velocity.limit(this.maxSpeed);
         this.pos.add(this.velocity);
         this.acceleration.set(0, 0);
+        return this;
     }
 
     applyForces(force: P5.Vector | null) {
         if (!force) return;
         this.acceleration.add(force);
+        return this;
     }
 
     drawSprite() {
@@ -83,6 +86,7 @@ class AutonomousAgent {
         this.p5.stroke(this.material);
         this.p5.noFill();
         this.p5.triangle(size, 0, -size, size / 2, -size, -size / 2);
+        return this;
     }
 
     drawHelpers() {
@@ -90,6 +94,7 @@ class AutonomousAgent {
         const temp = this.velocity.copy();
         temp.setMag(temp.mag() * 20);
         this.p5.line(0, 0, temp.x, temp.y);
+        return this;
     }
 
     seek(target: P5.Vector | null, isArriving: boolean = false) {
