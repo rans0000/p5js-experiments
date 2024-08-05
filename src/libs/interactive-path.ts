@@ -47,20 +47,24 @@ class InteractivePath {
 
         for (let i = 0; i < numberOfLines; i++) {
             const segmentLength = points[i].length;
-            for (let j = 1; j < segmentLength; j++) {
-                const line = P5.Vector.sub(points[i][j], points[i][j - 1]);
-                const mouse = P5.Vector.sub(queryPoint, points[i][j - 1]);
+            let prev = 0;
+
+            for (let j = 1; (!this.isClosed && j < segmentLength) || (this.isClosed && j <= segmentLength); j++) {
+                let curr = j % segmentLength;
+                const line = P5.Vector.sub(points[i][curr], points[i][prev]);
+                const mouse = P5.Vector.sub(queryPoint, points[i][prev]);
                 const projection = mouse.dot(line);
                 const projectionVector = line
                     .copy()
                     .normalize()
                     .setMag(this.p5.constrain(projection / line.magSq(), 0, 1) * line.mag());
-                const projectionPos = projectionVector.copy().add(points[i][j - 1]);
+                const projectionPos = projectionVector.copy().add(points[i][prev]);
                 const distanceToSegment = projectionPos.copy().sub(queryPoint).magSq();
                 if (shortestLength === undefined || distanceToSegment < shortestLength) {
                     shortestLength = distanceToSegment;
                     shortestPoint = projectionPos;
                 }
+                prev = curr;
             }
         }
         return {

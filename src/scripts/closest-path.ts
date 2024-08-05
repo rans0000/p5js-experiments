@@ -52,7 +52,7 @@ const sketch = (p5: P5) => {
             return false;
         };
 
-        path = new InteractivePath(p5, { isClosed: true });
+        path = new InteractivePath(p5, { isClosed: false });
         const points: TPoints[] = [
             [p5.createVector(200, 300), p5.createVector(250, 150), p5.createVector(550, 250), p5.createVector(730, 100)]
         ];
