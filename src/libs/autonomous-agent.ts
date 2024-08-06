@@ -1,5 +1,6 @@
 import P5 from 'p5';
 import { TAutonomousAgentConfig } from '../utils/types';
+import InteractivePath from './interactive-path';
 
 type Keys = 'maxSpeed' | 'maxForce';
 class AutonomousAgent {
@@ -76,7 +77,7 @@ class AutonomousAgent {
     }
 
     applyForces(force: P5.Vector | null) {
-        if (!force) return;
+        if (!force) return this;
         this.acceleration.add(force);
         return this;
     }
@@ -84,6 +85,7 @@ class AutonomousAgent {
     drawSprite() {
         const size = this.r;
         this.p5.stroke(this.material);
+        this.p5.strokeWeight(1);
         this.p5.noFill();
         this.p5.triangle(size, 0, -size, size / 2, -size, -size / 2);
         return this;
@@ -153,6 +155,19 @@ class AutonomousAgent {
 
         this.wanderTheta += this.p5.random(-deltaTheta, deltaTheta);
         return this.seek(targetPos);
+    }
+
+    pathFollow(path: InteractivePath) {
+        const lookahead = 50;
+        const target = this.velocity.copy().normalize().mult(lookahead).add(this.pos);
+        this.p5.strokeWeight(1);
+        this.p5.stroke(255);
+        this.p5.circle(target.x, target.y, 5);
+        const closest = path.getClosestSegment(target.x, target.y);
+        if (closest.length && closest.length > path.radius && closest.intersectionPosition) {
+            return this.seek(closest.intersectionPosition);
+        }
+        return this.velocity.copy();
     }
 
     constraintWithinWindow(x: number, y: number) {
