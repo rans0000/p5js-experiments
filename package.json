@@ -1,7 +1,7 @@
 {
     "name": "P5JS-Experiments",
     "version": "0.1.0",
-    "description": "ThreeJS experiments",
+    "description": "A collection of creative coding experiments using P5.js",
     "source": "src/index.html",
     "author": "rans0000@gmail.com",
     "license": "ISC",
