@@ -2,6 +2,7 @@ import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import AutonomousAgent from 'src/libs/autonomous-agent';
 import { TPoints } from 'src/utils/types';
+import { MOUSE_BTN } from 'src/utils/utils';
 import InteractivePath from '../libs/interactive-path';
 
 /**--------------------------------- */
@@ -14,7 +15,8 @@ let agents: AutonomousAgent[] = [];
 const sketch = (p5: P5) => {
     const options = {
         maxSpeed: 3.5,
-        maxForce: 0.2
+        maxForce: 0.1,
+        perceptionRadius: 10
     };
 
     const gui = new GUI({ autoPlace: false });
@@ -35,6 +37,13 @@ const sketch = (p5: P5) => {
             }
         })
     );
+    gui.add(options, 'perceptionRadius', 0.01, 200, 10).onChange((val) =>
+        agents.forEach((agent, i) => {
+            if (i === 0) {
+                agent.setValues('perceptionRadius', val);
+            }
+        })
+    );
 
     /** setup */
     p5.setup = () => {
@@ -52,7 +61,8 @@ const sketch = (p5: P5) => {
         p5.background(200, 60, 10);
 
         path.update(p5.deltaTime).draw();
-        pathFollow(path);
+        // pathFollow(path, agents);
+        flock(agents);
     };
 
     /**--------------------------------- */
@@ -82,18 +92,29 @@ const sketch = (p5: P5) => {
 
         //setup agent
         agents = [];
-        agents.push(
-            new AutonomousAgent(p5, {
-                pos: p5.createVector(200, 100),
-                maxSpeed: options.maxSpeed,
-                maxForce: options.maxForce
-            })
-        );
+        for (let i = 0; i < 100; i++) {
+            agents.push(
+                new AutonomousAgent(p5, {
+                    pos: p5.createVector(p5.random(window.innerWidth), p5.random(window.innerHeight)),
+                    velocity: P5.Vector.random2D().setMag(options.maxSpeed),
+                    maxSpeed: options.maxSpeed,
+                    maxForce: options.maxForce,
+                    wrapOnScreenEdge: true
+                })
+            );
+        }
     }
 
-    function pathFollow(path: InteractivePath) {
+    function pathFollow(path: InteractivePath, agents: AutonomousAgent[]) {
         for (let i = 0; i < agents.length; i++) {
             const force = agents[i].pathFollow(path);
+            agents[i].applyForces(force).update().draw();
+        }
+    }
+
+    function flock(agents: AutonomousAgent[]) {
+        for (let i = 0; i < agents.length; i++) {
+            const force = agents[i].groupBehaviour(agents);
             agents[i].applyForces(force).update().draw();
         }
     }

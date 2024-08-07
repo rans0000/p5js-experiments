@@ -43,6 +43,8 @@ export type TAutonomousAgentConfig = {
     breakingThreshold: number;
     r: number;
     material: P5.Color;
+    perceptionRadius: number;
+    wrapOnScreenEdge: boolean;
 };
 
 export type TInteractivePathConfig = {

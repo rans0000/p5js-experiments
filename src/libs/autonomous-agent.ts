@@ -2,7 +2,7 @@ import P5 from 'p5';
 import { TAutonomousAgentConfig } from '../utils/types';
 import InteractivePath from './interactive-path';
 
-type Keys = 'maxSpeed' | 'maxForce';
+type Keys = 'maxSpeed' | 'maxForce' | 'perceptionRadius';
 class AutonomousAgent {
     p5: P5;
     pos: P5.Vector;
@@ -15,6 +15,8 @@ class AutonomousAgent {
     breakingThreshold: number;
     r: number;
     material: P5.Color;
+    perceptionRadius: number;
+    wrapOnScreenEdge: boolean;
 
     constructor(p5: P5, _config: Partial<TAutonomousAgentConfig>) {
         const defaultConfig: TAutonomousAgentConfig = {
@@ -27,7 +29,9 @@ class AutonomousAgent {
             wanderTheta: 0,
             breakingThreshold: 100,
             r: 20,
-            material: p5.color('#00ffff')
+            material: p5.color('#00ffff'),
+            perceptionRadius: 10,
+            wrapOnScreenEdge: false
         };
         const config = { ...defaultConfig, ..._config };
         this.p5 = p5;
@@ -41,6 +45,8 @@ class AutonomousAgent {
         this.breakingThreshold = config.breakingThreshold;
         this.r = config.r;
         this.material = config.material;
+        this.perceptionRadius = config.perceptionRadius;
+        this.wrapOnScreenEdge = config.wrapOnScreenEdge;
 
         this.wanderTheta = 0;
     }
@@ -53,8 +59,26 @@ class AutonomousAgent {
             case 'maxForce':
                 this.maxForce = value;
                 break;
+            case 'perceptionRadius':
+                this.perceptionRadius = value;
+                break;
             default:
                 throw 'Unsupported key passed to setValues()';
+        }
+    }
+
+    wrapScreen() {
+        const { innerWidth, innerHeight } = window;
+
+        if (this.pos.x < 0) {
+            this.pos.x = innerWidth;
+        } else if (this.pos.x > innerWidth) {
+            this.pos.x = 0;
+        }
+        if (this.pos.y < 0) {
+            this.pos.y = innerHeight;
+        } else if (this.pos.y > innerHeight) {
+            this.pos.y = 0;
         }
     }
 
@@ -72,6 +96,7 @@ class AutonomousAgent {
         this.velocity.add(this.acceleration);
         this.velocity.limit(this.maxSpeed);
         this.pos.add(this.velocity);
+        this.wrapOnScreenEdge && this.wrapScreen();
         this.acceleration.set(0, 0);
         return this;
     }
@@ -99,8 +124,8 @@ class AutonomousAgent {
         return this;
     }
 
-    seek(target: P5.Vector | null, isArriving: boolean = false) {
-        if (!target) return null;
+    seek(target: P5.Vector | null, isArriving: boolean = false): P5.Vector {
+        if (!target) return this.p5.createVector();
         let force = P5.Vector.sub(target, this.pos);
         let desiredVelocity = this.maxSpeed;
 
@@ -140,7 +165,7 @@ class AutonomousAgent {
         return this.seek(target, true);
     }
 
-    wander() {
+    wander(): P5.Vector {
         const lookahead = 100;
         const lookaheadRadius = 50;
         const deltaTheta = this.p5.PI / 6;
@@ -157,7 +182,7 @@ class AutonomousAgent {
         return this.seek(targetPos);
     }
 
-    pathFollow(path: InteractivePath) {
+    pathFollow(path: InteractivePath): P5.Vector {
         const lookahead = 50;
         const target = this.velocity.copy().normalize().mult(lookahead).add(this.pos);
         this.p5.strokeWeight(1);
@@ -168,6 +193,23 @@ class AutonomousAgent {
             return this.seek(closest.intersectionPosition);
         }
         return this.velocity.copy();
+    }
+
+    groupBehaviour(agents: AutonomousAgent[]): P5.Vector {
+        let alignment = this.p5.createVector();
+        const numberOfAgents = agents.length;
+
+        for (let i = 0; i < numberOfAgents; i++) {
+            if (agents[i] === this) return alignment;
+            const dis = P5.Vector.dist(agents[i].pos, this.pos);
+            if (dis > this.perceptionRadius) return alignment;
+
+            alignment.add(agents[i].velocity);
+        }
+        if (numberOfAgents > 0) {
+            alignment.div(numberOfAgents);
+        }
+        return alignment;
     }
 
     constraintWithinWindow(x: number, y: number) {
