@@ -7,7 +7,9 @@
     "license": "ISC",
     "scripts": {
         "start": "parcel src/*.html --public-url / --open",
-        "build": "parcel build src/*.html --no-cache --public-url ./"
+        "build": "parcel build src/*.html --no-cache --public-url ./",
+        "predeploy": "rm -rf dist && parcel build src/*.html --no-cache --public-url https://github.com/rans0000/p5js-experiments",
+        "deploy": "gh-pages -d dist"
     },
     "devDependencies": {
         "@parcel/transformer-sass": "2.11.0",
@@ -23,6 +25,7 @@
     },
     "dependencies": {
         "dat.gui": "^0.7.9",
+        "gh-pages": "^6.1.1",
         "p5": "^1.9.0"
     }
 }
