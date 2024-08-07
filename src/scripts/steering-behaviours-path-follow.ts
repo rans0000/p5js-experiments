@@ -114,8 +114,8 @@ const sketch = (p5: P5) => {
 
     function flock(agents: AutonomousAgent[]) {
         for (let i = 0; i < agents.length; i++) {
-            const force = agents[i].groupBehaviour(agents);
-            agents[i].applyForces(force).update().draw();
+            const { alignment, cohesion } = agents[i].groupBehaviour(agents);
+            agents[i].applyForces(alignment).applyForces(cohesion).update().draw();
         }
     }
 

@@ -1,5 +1,5 @@
 import P5 from 'p5';
-import { TAutonomousAgentConfig } from '../utils/types';
+import { TAutonomousAgentConfig, TGroupBehaviour } from '../utils/types';
 import InteractivePath from './interactive-path';
 
 type Keys = 'maxSpeed' | 'maxForce' | 'perceptionRadius';
@@ -195,21 +195,24 @@ class AutonomousAgent {
         return this.velocity.copy();
     }
 
-    groupBehaviour(agents: AutonomousAgent[]): P5.Vector {
+    groupBehaviour(agents: AutonomousAgent[]): TGroupBehaviour {
         let alignment = this.p5.createVector();
+        let cohesion = this.p5.createVector();
+        let separation = this.p5.createVector();
         const numberOfAgents = agents.length;
 
         for (let i = 0; i < numberOfAgents; i++) {
-            if (agents[i] === this) return alignment;
+            if (agents[i] === this) return { alignment, cohesion, separation };
             const dis = P5.Vector.dist(agents[i].pos, this.pos);
-            if (dis > this.perceptionRadius) return alignment;
+            if (dis > this.perceptionRadius) return { alignment, cohesion, separation };
 
             alignment.add(agents[i].velocity);
+            cohesion.add(agents[i].pos);
         }
         if (numberOfAgents > 0) {
             alignment.div(numberOfAgents);
         }
-        return alignment;
+        return { alignment, cohesion, separation };
     }
 
     constraintWithinWindow(x: number, y: number) {

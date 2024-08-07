@@ -47,6 +47,12 @@ export type TAutonomousAgentConfig = {
     wrapOnScreenEdge: boolean;
 };
 
+export type TGroupBehaviour = {
+    alignment: P5.Vector;
+    cohesion: P5.Vector;
+    separation: P5.Vector;
+};
+
 export type TInteractivePathConfig = {
     radius: number;
     color: number;
