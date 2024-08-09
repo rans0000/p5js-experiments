@@ -3,7 +3,9 @@ import { TAutonomousAgentConfig, TGroupBehaviour } from '../utils/types';
 import InteractivePath from './interactive-path';
 
 type Keys = 'maxSpeed' | 'maxForce' | 'perceptionRadius';
+let id = -1;
 class AutonomousAgent {
+    id: number;
     p5: P5;
     pos: P5.Vector;
     mass: number;
@@ -34,6 +36,8 @@ class AutonomousAgent {
             wrapOnScreenEdge: false
         };
         const config = { ...defaultConfig, ..._config };
+
+        this.id = ++id;
         this.p5 = p5;
         this.pos = config.pos;
         this.mass = config.mass;
@@ -93,7 +97,8 @@ class AutonomousAgent {
     }
 
     update() {
-        this.velocity.add(this.acceleration);
+        // this.velocity.add(this.acceleration);
+        this.velocity.add(this.acceleration.limit(this.maxForce));
         this.velocity.limit(this.maxSpeed);
         this.pos.add(this.velocity);
         this.wrapOnScreenEdge && this.wrapScreen();
@@ -113,14 +118,22 @@ class AutonomousAgent {
         this.p5.strokeWeight(1);
         this.p5.noFill();
         this.p5.triangle(size, 0, -size, size / 2, -size, -size / 2);
+        this.p5.stroke(50);
         return this;
     }
 
     drawHelpers() {
+        this.p5.noStroke();
+        this.p5.fill(255);
+        this.p5.strokeWeight(1);
+        this.p5.textSize(30);
+        this.p5.text(this.id, 0, 0);
+        this.p5.noFill();
         this.p5.stroke(0, 80, 50);
         const temp = this.velocity.copy();
         temp.setMag(temp.mag() * 20);
         this.p5.line(0, 0, temp.x, temp.y);
+        this.p5.circle(0, 0, this.perceptionRadius);
         return this;
     }
 
@@ -202,15 +215,19 @@ class AutonomousAgent {
         const numberOfAgents = agents.length;
 
         for (let i = 0; i < numberOfAgents; i++) {
-            if (agents[i] === this) return { alignment, cohesion, separation };
+            if (agents[i] === this) continue;
             const dis = P5.Vector.dist(agents[i].pos, this.pos);
-            if (dis > this.perceptionRadius) return { alignment, cohesion, separation };
+            if (dis > this.perceptionRadius) continue;
 
             alignment.add(agents[i].velocity);
             cohesion.add(agents[i].pos);
-        }
-        if (numberOfAgents > 0) {
-            alignment.div(numberOfAgents);
+
+            console.log();
+
+            if (numberOfAgents - 1 > 0) {
+                alignment.div(numberOfAgents - 1).sub(this.velocity);
+                cohesion.div(numberOfAgents - 1).sub(this.pos);
+            }
         }
         return { alignment, cohesion, separation };
     }

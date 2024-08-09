@@ -2,7 +2,6 @@ import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import AutonomousAgent from 'src/libs/autonomous-agent';
 import { TPoints } from 'src/utils/types';
-import { MOUSE_BTN } from 'src/utils/utils';
 import InteractivePath from '../libs/interactive-path';
 
 /**--------------------------------- */
@@ -14,9 +13,9 @@ let agents: AutonomousAgent[] = [];
 // sketch
 const sketch = (p5: P5) => {
     const options = {
-        maxSpeed: 3.5,
-        maxForce: 0.1,
-        perceptionRadius: 10
+        maxSpeed: 2,
+        maxForce: 0.04,
+        perceptionRadius: 20
     };
 
     const gui = new GUI({ autoPlace: false });
@@ -99,9 +98,18 @@ const sketch = (p5: P5) => {
                     velocity: P5.Vector.random2D().setMag(options.maxSpeed),
                     maxSpeed: options.maxSpeed,
                     maxForce: options.maxForce,
+                    perceptionRadius: options.perceptionRadius,
                     wrapOnScreenEdge: true
                 })
             );
+        }
+    }
+
+    function flock(agents: AutonomousAgent[]) {
+        for (let i = 0; i < agents.length; i++) {
+            const { alignment, cohesion } = agents[i].groupBehaviour(agents);
+
+            agents[i].applyForces(alignment).applyForces(cohesion).update().draw();
         }
     }
 
@@ -109,13 +117,6 @@ const sketch = (p5: P5) => {
         for (let i = 0; i < agents.length; i++) {
             const force = agents[i].pathFollow(path);
             agents[i].applyForces(force).update().draw();
-        }
-    }
-
-    function flock(agents: AutonomousAgent[]) {
-        for (let i = 0; i < agents.length; i++) {
-            const { alignment, cohesion } = agents[i].groupBehaviour(agents);
-            agents[i].applyForces(alignment).applyForces(cohesion).update().draw();
         }
     }
 
