@@ -97,7 +97,6 @@ class AutonomousAgent {
     }
 
     update() {
-        // this.velocity.add(this.acceleration);
         this.velocity.add(this.acceleration.limit(this.maxForce));
         this.velocity.limit(this.maxSpeed);
         this.pos.add(this.velocity);
@@ -123,17 +122,19 @@ class AutonomousAgent {
     }
 
     drawHelpers() {
+        // draw text
         this.p5.noStroke();
         this.p5.fill(255);
-        this.p5.strokeWeight(1);
-        this.p5.textSize(30);
+        this.p5.textSize(15);
         this.p5.text(this.id, 0, 0);
+        // draw perception radius
         this.p5.noFill();
-        this.p5.stroke(0, 80, 50);
-        const temp = this.velocity.copy();
-        temp.setMag(temp.mag() * 20);
-        this.p5.line(0, 0, temp.x, temp.y);
+        this.velocity.mag() < this.maxSpeed ? this.p5.stroke(0, 80, 50) : this.p5.stroke(50);
+        this.p5.strokeWeight(1);
         this.p5.circle(0, 0, this.perceptionRadius);
+        // draw heading
+        const temp = this.velocity.copy().mult(20);
+        this.p5.line(0, 0, temp.x, temp.y);
         return this;
     }
 
@@ -216,17 +217,33 @@ class AutonomousAgent {
 
         for (let i = 0; i < numberOfAgents; i++) {
             if (agents[i] === this) continue;
-            const dis = P5.Vector.dist(agents[i].pos, this.pos);
-            if (dis > this.perceptionRadius) continue;
+            const distance = P5.Vector.dist(agents[i].pos, this.pos);
+            if (distance > this.perceptionRadius) continue;
 
             alignment.add(agents[i].velocity);
             cohesion.add(agents[i].pos);
+            const diff = this.pos.copy().sub(agents[i].pos); //
+            // .div(distance); //
 
-            console.log();
+            separation.add(diff);
+
+            this.p5.stroke(20);
+            this.p5.strokeWeight(2);
+            // this.p5.line(agents[i].pos.x, agents[i].pos.y, this.pos.x, this.pos.y);
 
             if (numberOfAgents - 1 > 0) {
-                alignment.div(numberOfAgents - 1).sub(this.velocity);
-                cohesion.div(numberOfAgents - 1).sub(this.pos);
+                alignment
+                    .div(numberOfAgents - 1)
+                    .sub(this.velocity)
+                    .setMag(this.maxSpeed);
+                cohesion
+                    .div(numberOfAgents - 1)
+                    .sub(this.pos)
+                    .setMag(this.maxSpeed);
+                separation
+                    .div(numberOfAgents - 1)
+                    .sub(this.velocity)
+                    .setMag(this.maxSpeed);
             }
         }
         return { alignment, cohesion, separation };

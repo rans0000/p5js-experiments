@@ -1,7 +1,7 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import AutonomousAgent from 'src/libs/autonomous-agent';
-import { TPoints } from 'src/utils/types';
+import { TGroupBehaviour, TPoints } from 'src/utils/types';
 import InteractivePath from '../libs/interactive-path';
 
 /**--------------------------------- */
@@ -13,9 +13,9 @@ let agents: AutonomousAgent[] = [];
 // sketch
 const sketch = (p5: P5) => {
     const options = {
-        maxSpeed: 2,
-        maxForce: 0.04,
-        perceptionRadius: 20
+        maxSpeed: 1,
+        maxForce: 0.02,
+        perceptionRadius: 70
     };
 
     const gui = new GUI({ autoPlace: false });
@@ -38,9 +38,7 @@ const sketch = (p5: P5) => {
     );
     gui.add(options, 'perceptionRadius', 0.01, 200, 10).onChange((val) =>
         agents.forEach((agent, i) => {
-            if (i === 0) {
-                agent.setValues('perceptionRadius', val);
-            }
+            agent.setValues('perceptionRadius', val);
         })
     );
 
@@ -75,7 +73,7 @@ const sketch = (p5: P5) => {
         p5.background(200, 60, 10);
 
         // setup path
-        path = new InteractivePath(p5, { isClosed: true, color: 20, radius: 10 });
+        path = new InteractivePath(p5, { isClosed: true, color: 20, radius: 50 });
         const points: TPoints[] = [
             [
                 p5.createVector(150, 300),
@@ -91,11 +89,13 @@ const sketch = (p5: P5) => {
 
         //setup agent
         agents = [];
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 10; i++) {
             agents.push(
                 new AutonomousAgent(p5, {
                     pos: p5.createVector(p5.random(window.innerWidth), p5.random(window.innerHeight)),
                     velocity: P5.Vector.random2D().setMag(options.maxSpeed),
+                    // pos: p5.createVector(i * 200 + 200, 300),
+                    // velocity: p5.createVector(2 - (i % 2), 0),
                     maxSpeed: options.maxSpeed,
                     maxForce: options.maxForce,
                     perceptionRadius: options.perceptionRadius,
@@ -106,10 +106,19 @@ const sketch = (p5: P5) => {
     }
 
     function flock(agents: AutonomousAgent[]) {
-        for (let i = 0; i < agents.length; i++) {
-            const { alignment, cohesion } = agents[i].groupBehaviour(agents);
+        const forces: TGroupBehaviour[] = [];
 
-            agents[i].applyForces(alignment).applyForces(cohesion).update().draw();
+        for (let i = 0; i < agents.length; i++) {
+            const groupBehaviour = agents[i].groupBehaviour(agents);
+            forces.push(groupBehaviour);
+        }
+        for (let i = 0; i < agents.length; i++) {
+            agents[i]
+                .applyForces(forces[i].cohesion.mult(1)) //
+                .applyForces(forces[i].alignment) //
+                .applyForces(forces[i].separation) //
+                .update()
+                .draw(true);
         }
     }
 
