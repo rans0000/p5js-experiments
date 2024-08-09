@@ -27,7 +27,11 @@ const sketch = (p5: P5) => {
         .onChange((val: TMode) => {
             init(p5);
         });
-    gui.add(options, 'showHelpers');
+    gui.add(options, 'showHelpers').onChange((val) =>
+        agents.forEach((agent, i) => {
+            agent.setValues('showHelpers', val);
+        })
+    );
     gui.add(options, 'maxSpeed', 0.1, 10, 0.1).onChange((val) =>
         agents.forEach((agent, i) => {
             if (i === 0) {
@@ -142,7 +146,8 @@ const sketch = (p5: P5) => {
             new AutonomousAgent(p5, {
                 pos: p5.createVector(200, 300),
                 maxSpeed: options.maxSpeed,
-                maxForce: options.maxForce
+                maxForce: options.maxForce,
+                showHelpers: options.showHelpers
             })
         );
         target = target || p5.createVector(window.innerWidth / 2, window.innerHeight / 2);
@@ -153,7 +158,7 @@ const sketch = (p5: P5) => {
             const force = agents[i].seek(target);
             agents[i].applyForces(force);
             agents[i].update();
-            agents[i].draw(options.showHelpers);
+            agents[i].draw();
         }
     }
 
@@ -168,7 +173,7 @@ const sketch = (p5: P5) => {
             const force = agents[i].flee(target);
             agents[i].applyForces(force);
             agents[i].update();
-            agents[i].draw(options.showHelpers);
+            agents[i].draw();
         }
     }
 
@@ -176,13 +181,15 @@ const sketch = (p5: P5) => {
         const player = new AutonomousAgent(p5, {
             pos: p5.createVector(window.innerWidth, window.innerHeight),
             maxSpeed: options.maxSpeed,
-            maxForce: options.maxForce
+            maxForce: options.maxForce,
+            showHelpers: options.showHelpers
         });
         const aiBot = new AutonomousAgent(p5, {
             pos: p5.createVector(200, 300),
             maxSpeed: 4,
             maxForce: 0.3,
-            material: p5.color('#0000ff')
+            material: p5.color('#0000ff'),
+            showHelpers: options.showHelpers
         });
         agents = [player, aiBot];
         target = target || p5.createVector(window.innerWidth / 2, window.innerHeight / 2);
@@ -199,7 +206,7 @@ const sketch = (p5: P5) => {
 
         for (let i = 0; i < agents.length; i++) {
             agents[i].update();
-            agents[i].draw(options.showHelpers);
+            agents[i].draw();
         }
     }
 
@@ -207,13 +214,15 @@ const sketch = (p5: P5) => {
         const player = new AutonomousAgent(p5, {
             pos: p5.createVector(300, 300),
             maxSpeed: options.maxSpeed,
-            maxForce: options.maxForce
+            maxForce: options.maxForce,
+            showHelpers: options.showHelpers
         });
         const runner = new AutonomousAgent(p5, {
             pos: p5.createVector(400, 300),
             maxSpeed: 2,
             maxForce: 0.1,
-            material: p5.color('#0000ff')
+            material: p5.color('#0000ff'),
+            showHelpers: options.showHelpers
         });
         agents = [player, runner];
         target = target || p5.createVector(window.innerWidth / 2, window.innerHeight / 2);
@@ -230,7 +239,7 @@ const sketch = (p5: P5) => {
 
         for (let i = 0; i < agents.length; i++) {
             agents[i].update();
-            agents[i].draw(options.showHelpers);
+            agents[i].draw();
         }
     }
 
@@ -238,7 +247,8 @@ const sketch = (p5: P5) => {
         const player = new AutonomousAgent(p5, {
             pos: p5.createVector(300, 300),
             maxSpeed: options.maxSpeed,
-            maxForce: options.maxForce
+            maxForce: options.maxForce,
+            showHelpers: options.showHelpers
         });
         agents = [player];
         target = target || p5.createVector(window.innerWidth / 2, window.innerHeight / 2);
@@ -252,7 +262,7 @@ const sketch = (p5: P5) => {
 
         for (let i = 0; i < agents.length; i++) {
             agents[i].update();
-            agents[i].draw(options.showHelpers);
+            agents[i].draw();
         }
     }
 
@@ -260,7 +270,8 @@ const sketch = (p5: P5) => {
         const player = new AutonomousAgent(p5, {
             pos: p5.createVector(window.innerWidth / 2, window.innerHeight / 2),
             maxSpeed: options.maxSpeed,
-            maxForce: options.maxForce
+            maxForce: options.maxForce,
+            showHelpers: options.showHelpers
         });
         agents = [player];
         target = null;
@@ -274,7 +285,7 @@ const sketch = (p5: P5) => {
 
         for (let i = 0; i < agents.length; i++) {
             agents[i].update();
-            agents[i].draw(options.showHelpers);
+            agents[i].draw();
         }
     }
 

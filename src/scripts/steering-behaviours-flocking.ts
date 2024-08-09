@@ -11,6 +11,7 @@ let agents: AutonomousAgent[] = [];
 // sketch
 const sketch = (p5: P5) => {
     const options = {
+        showHelpers: false,
         alignmentWeight: 1,
         cohesionWeight: 1,
         separationWeight: 1,
@@ -24,18 +25,19 @@ const sketch = (p5: P5) => {
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
 
+    gui.add(options, 'showHelpers').onChange((val) =>
+        agents.forEach((agent, i) => {
+            agent.setValues('showHelpers', val);
+        })
+    );
     gui.add(options, 'maxSpeed', 0.1, 10, 0.1).onChange((val) =>
         agents.forEach((agent, i) => {
-            if (i === 0) {
-                agent.setValues('maxSpeed', val);
-            }
+            agent.setValues('maxSpeed', val);
         })
     );
     gui.add(options, 'maxForce', 0.01, 2, 0.01).onChange((val) =>
         agents.forEach((agent, i) => {
-            if (i === 0) {
-                agent.setValues('maxForce', val);
-            }
+            agent.setValues('maxForce', val);
         })
     );
     gui.add(options, 'perceptionRadius', 0.01, 200, 1).onChange((val) =>

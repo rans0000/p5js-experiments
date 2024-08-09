@@ -92,7 +92,7 @@ const sketch = (p5: P5) => {
             const length = p5.sin((p5.PI / twist) * i * 40) * 5 + i * scale;
             const x = p5.cos(angle * i) * length;
             const y = p5.sin(angle * i) * length;
-            p5.line(prevX, prevY, x, y);
+            p5.line(prevX || 0, prevY, x, y);
             prevX = x;
             prevY = y;
         }

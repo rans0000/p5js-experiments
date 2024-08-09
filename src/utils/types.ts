@@ -46,6 +46,7 @@ export type TAutonomousAgentConfig = {
     perceptionRadius: number;
     repelRadius: number;
     wrapOnScreenEdge: boolean;
+    showHelpers: boolean;
 };
 
 export type TGroupBehaviour = {

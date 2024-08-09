@@ -2,7 +2,7 @@ import P5 from 'p5';
 import { TAutonomousAgentConfig, TGroupBehaviour } from '../utils/types';
 import InteractivePath from './interactive-path';
 
-type Keys = 'maxSpeed' | 'maxForce' | 'perceptionRadius' | 'repelRadius';
+type Keys = 'maxSpeed' | 'maxForce' | 'perceptionRadius' | 'repelRadius' | 'showHelpers';
 let id = -1;
 class AutonomousAgent {
     id: number;
@@ -20,6 +20,7 @@ class AutonomousAgent {
     perceptionRadius: number;
     repelRadius: number;
     wrapOnScreenEdge: boolean;
+    showHelpers: boolean;
 
     constructor(p5: P5, _config: Partial<TAutonomousAgentConfig>) {
         const defaultConfig: TAutonomousAgentConfig = {
@@ -35,7 +36,8 @@ class AutonomousAgent {
             material: p5.color('#00ffff'),
             perceptionRadius: 30,
             repelRadius: 20,
-            wrapOnScreenEdge: false
+            wrapOnScreenEdge: false,
+            showHelpers: false
         };
         const config = { ...defaultConfig, ..._config };
 
@@ -53,48 +55,46 @@ class AutonomousAgent {
         this.material = config.material;
         this.perceptionRadius = config.perceptionRadius;
         this.wrapOnScreenEdge = config.wrapOnScreenEdge;
+        this.showHelpers = config.showHelpers;
 
         this.wanderTheta = 0;
     }
 
-    setValues(key: Keys, value: number) {
-        switch (key) {
-            case 'maxSpeed':
-                this.maxSpeed = value;
-                break;
-            case 'maxForce':
-                this.maxForce = value;
-                break;
-            case 'perceptionRadius':
-                this.perceptionRadius = value;
-                break;
-            case 'repelRadius':
-                this.repelRadius = value;
-                break;
-            default:
-                throw 'Unsupported key passed to setValues()';
+    setValues(key: Keys, value: number | boolean) {
+        if (typeof value === 'number') {
+            switch (key) {
+                case 'maxSpeed':
+                    this.maxSpeed = value;
+                    break;
+                case 'maxForce':
+                    this.maxForce = value;
+                    break;
+                case 'perceptionRadius':
+                    this.perceptionRadius = value;
+                    break;
+                case 'repelRadius':
+                    this.repelRadius = value;
+                    break;
+
+                default:
+                    throw 'Unsupported key passed to setValues()';
+            }
+        }
+        if (typeof value === 'boolean') {
+            switch (key) {
+                case 'showHelpers':
+                    this.showHelpers = value;
+                    break;
+                default:
+                    throw 'Unsupported key passed to setValues()';
+            }
         }
     }
 
-    wrapScreen() {
-        const { innerWidth, innerHeight } = window;
-
-        if (this.pos.x < 0) {
-            this.pos.x = innerWidth;
-        } else if (this.pos.x > innerWidth) {
-            this.pos.x = 0;
-        }
-        if (this.pos.y < 0) {
-            this.pos.y = innerHeight;
-        } else if (this.pos.y > innerHeight) {
-            this.pos.y = 0;
-        }
-    }
-
-    draw(showHelper: boolean = false) {
+    draw() {
         this.p5.push();
         this.p5.translate(this.pos.x, this.pos.y);
-        if (showHelper) this.drawHelpers();
+        this.showHelpers && this.drawHelpers();
         this.p5.rotate(this.velocity.heading());
         this.drawSprite();
         this.p5.pop();
@@ -105,7 +105,8 @@ class AutonomousAgent {
         this.velocity.add(this.acceleration.limit(this.maxForce));
         this.velocity.limit(this.maxSpeed);
         this.pos.add(this.velocity);
-        this.wrapOnScreenEdge && this.wrapScreen();
+        // this.wrapOnScreenEdge && this.wrapScreen();
+        this.wrapOnScreenEdge && this.constraintWithinWindow(this.pos.x, this.pos.y);
         this.acceleration.set(0, 0);
         return this;
     }
@@ -240,7 +241,7 @@ class AutonomousAgent {
 
             this.p5.stroke(20);
             this.p5.strokeWeight(2);
-            // this.p5.line(agents[i].pos.x, agents[i].pos.y, this.pos.x, this.pos.y);
+            this.showHelpers && this.p5.line(agents[i].pos.x, agents[i].pos.y, this.pos.x, this.pos.y);
 
             if (numberOfAgents - 1 > 0) {
                 alignment
@@ -267,6 +268,21 @@ class AutonomousAgent {
         if (y < 0) this.pos.y = innerHeight;
         if (y > innerHeight) this.pos.y = 0;
     }
+
+    // wrapScreen() {
+    //     const { innerWidth, innerHeight } = window;
+
+    //     if (this.pos.x < 0) {
+    //         this.pos.x = innerWidth;
+    //     } else if (this.pos.x > innerWidth) {
+    //         this.pos.x = 0;
+    //     }
+    //     if (this.pos.y < 0) {
+    //         this.pos.y = innerHeight;
+    //     } else if (this.pos.y > innerHeight) {
+    //         this.pos.y = 0;
+    //     }
+    // }
 }
 
 export default AutonomousAgent;
