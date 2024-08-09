@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Flocking (Steering behaviours) - P5JS</title>
+        <link rel="stylesheet" href="./scss/styles.scss" />
+    </head>
+    <body class="body__fullscreen">
+        <header>
+            <h1>
+                <span>P5JS Experiments</span>
+                <span>Flocking (Steering behaviours)</span>
+            </h1>
+            <button class="btn-dialog">More Info</button>
+            <dialog>
+                <div class="dialog-wrapper">
+                    <button autofocus class="btn-dialog-close">&times;</button>
+                    <h1>Flocking (Steering behaviours)</h1>
+                    <p>
+                        Flocking Behaviours: <br />
+                        Use the sliders to tweak the influence of the behaviours.<br />
+                        <strong class="sub-title">Alignment: </strong>
+                        Nearby vehicles will try to head in the same direction.<br />
+                        <strong class="sub-title">Cohesion: </strong>
+                        Nearby vehicles will try to stick together until they are too close defined by the 'repel
+                        radius'.<br />
+                        <strong class="sub-title">Separation: </strong>
+                        Nearby vehicles will try not to collide with each other.<br />
+                    </p>
+                    <a class="link-repo" target="_blank" href="https://github.com/rans0000/p5js-experiments">Github repo</a>
+                </div>
+            </dialog>
+        </header>
+        <main id="app"></main>
+        <span id="gui"></span>
+        <footer>
+            A bunch of creative coding experiments using p5JS.
+            <a href="https://github.com/rans0000" target="_blank">https://github.com/rans0000</a>
+        </footer>
+        <script type="module" src="./scripts/dialog.ts"></script>
+        <script type="module" src="./scripts/steering-behaviours-flocking.ts"></script>
+    </body>
+</html>
