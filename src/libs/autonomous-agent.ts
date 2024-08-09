@@ -206,7 +206,6 @@ class AutonomousAgent {
         const target = this.velocity.copy().normalize().mult(lookahead).add(this.pos);
         this.p5.strokeWeight(1);
         this.p5.stroke(255);
-        this.p5.circle(target.x, target.y, 5);
         const closest = path.getClosestSegment(target.x, target.y);
         if (closest.length && closest.length > path.radius && closest.intersectionPosition) {
             return this.seek(closest.intersectionPosition);

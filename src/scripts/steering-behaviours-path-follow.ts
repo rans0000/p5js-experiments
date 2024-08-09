@@ -1,7 +1,7 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import AutonomousAgent from 'src/libs/autonomous-agent';
-import { TGroupBehaviour, TPoints } from 'src/utils/types';
+import { TPoints } from 'src/utils/types';
 import InteractivePath from '../libs/interactive-path';
 
 /**--------------------------------- */
@@ -14,9 +14,7 @@ let agents: AutonomousAgent[] = [];
 const sketch = (p5: P5) => {
     const options = {
         maxSpeed: 3,
-        maxForce: 0.03,
-        perceptionRadius: 70,
-        repelRadius: 40
+        maxForce: 0.3
     };
 
     const gui = new GUI({ autoPlace: false });
@@ -37,16 +35,6 @@ const sketch = (p5: P5) => {
             }
         })
     );
-    gui.add(options, 'perceptionRadius', 0.01, 200, 1).onChange((val) =>
-        agents.forEach((agent, i) => {
-            agent.setValues('perceptionRadius', val);
-        })
-    );
-    gui.add(options, 'repelRadius', 0.01, 200, 1).onChange((val) =>
-        agents.forEach((agent, i) => {
-            agent.setValues('repelRadius', val);
-        })
-    );
 
     /** setup */
     p5.setup = () => {
@@ -64,8 +52,7 @@ const sketch = (p5: P5) => {
         p5.background(200, 60, 10);
 
         path.update(p5.deltaTime).draw();
-        // pathFollow(path, agents);
-        flock(agents);
+        pathFollow(path, agents);
     };
 
     /**--------------------------------- */
@@ -79,7 +66,7 @@ const sketch = (p5: P5) => {
         p5.background(200, 60, 10);
 
         // setup path
-        path = new InteractivePath(p5, { isClosed: true, color: 20, radius: 50 });
+        path = new InteractivePath(p5, { isClosed: true, color: 20, radius: 20 });
         const points: TPoints[] = [
             [
                 p5.createVector(150, 300),
@@ -94,38 +81,15 @@ const sketch = (p5: P5) => {
         path.setPoints(points);
 
         //setup agent
-        agents = [];
-        for (let i = 0; i < 40; i++) {
-            agents.push(
-                new AutonomousAgent(p5, {
-                    pos: p5.createVector(p5.random(window.innerWidth), p5.random(window.innerHeight)),
-                    velocity: P5.Vector.random2D().setMag(options.maxSpeed),
-                    // pos: p5.createVector(i * 200 + 200, 300),
-                    // velocity: p5.createVector(2 - (i % 2), 0),
-                    maxSpeed: options.maxSpeed,
-                    maxForce: options.maxForce,
-                    perceptionRadius: options.perceptionRadius,
-                    wrapOnScreenEdge: true
-                })
-            );
-        }
-    }
-
-    function flock(agents: AutonomousAgent[]) {
-        const forces: TGroupBehaviour[] = [];
-
-        for (let i = 0; i < agents.length; i++) {
-            const groupBehaviour = agents[i].groupBehaviour(agents);
-            forces.push(groupBehaviour);
-        }
-        for (let i = 0; i < agents.length; i++) {
-            agents[i]
-                .applyForces(forces[i].cohesion) //
-                .applyForces(forces[i].alignment) //
-                .applyForces(forces[i].separation) //
-                .update()
-                .draw();
-        }
+        agents.push(
+            new AutonomousAgent(p5, {
+                pos: p5.createVector(p5.random(window.innerWidth), p5.random(window.innerHeight)),
+                velocity: P5.Vector.random2D().setMag(options.maxSpeed),
+                maxSpeed: options.maxSpeed,
+                maxForce: options.maxForce,
+                wrapOnScreenEdge: true
+            })
+        );
     }
 
     function pathFollow(path: InteractivePath, agents: AutonomousAgent[]) {
