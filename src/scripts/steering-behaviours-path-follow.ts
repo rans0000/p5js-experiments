@@ -13,9 +13,10 @@ let agents: AutonomousAgent[] = [];
 // sketch
 const sketch = (p5: P5) => {
     const options = {
-        maxSpeed: 1,
-        maxForce: 0.02,
-        perceptionRadius: 70
+        maxSpeed: 3,
+        maxForce: 0.03,
+        perceptionRadius: 70,
+        repelRadius: 40
     };
 
     const gui = new GUI({ autoPlace: false });
@@ -36,9 +37,14 @@ const sketch = (p5: P5) => {
             }
         })
     );
-    gui.add(options, 'perceptionRadius', 0.01, 200, 10).onChange((val) =>
+    gui.add(options, 'perceptionRadius', 0.01, 200, 1).onChange((val) =>
         agents.forEach((agent, i) => {
             agent.setValues('perceptionRadius', val);
+        })
+    );
+    gui.add(options, 'repelRadius', 0.01, 200, 1).onChange((val) =>
+        agents.forEach((agent, i) => {
+            agent.setValues('repelRadius', val);
         })
     );
 
@@ -89,7 +95,7 @@ const sketch = (p5: P5) => {
 
         //setup agent
         agents = [];
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 40; i++) {
             agents.push(
                 new AutonomousAgent(p5, {
                     pos: p5.createVector(p5.random(window.innerWidth), p5.random(window.innerHeight)),
@@ -114,11 +120,11 @@ const sketch = (p5: P5) => {
         }
         for (let i = 0; i < agents.length; i++) {
             agents[i]
-                .applyForces(forces[i].cohesion.mult(1)) //
+                .applyForces(forces[i].cohesion) //
                 .applyForces(forces[i].alignment) //
                 .applyForces(forces[i].separation) //
                 .update()
-                .draw(true);
+                .draw();
         }
     }
 

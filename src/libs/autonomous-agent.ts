@@ -2,7 +2,7 @@ import P5 from 'p5';
 import { TAutonomousAgentConfig, TGroupBehaviour } from '../utils/types';
 import InteractivePath from './interactive-path';
 
-type Keys = 'maxSpeed' | 'maxForce' | 'perceptionRadius';
+type Keys = 'maxSpeed' | 'maxForce' | 'perceptionRadius' | 'repelRadius';
 let id = -1;
 class AutonomousAgent {
     id: number;
@@ -18,6 +18,7 @@ class AutonomousAgent {
     r: number;
     material: P5.Color;
     perceptionRadius: number;
+    repelRadius: number;
     wrapOnScreenEdge: boolean;
 
     constructor(p5: P5, _config: Partial<TAutonomousAgentConfig>) {
@@ -32,7 +33,8 @@ class AutonomousAgent {
             breakingThreshold: 100,
             r: 20,
             material: p5.color('#00ffff'),
-            perceptionRadius: 10,
+            perceptionRadius: 30,
+            repelRadius: 20,
             wrapOnScreenEdge: false
         };
         const config = { ...defaultConfig, ..._config };
@@ -65,6 +67,9 @@ class AutonomousAgent {
                 break;
             case 'perceptionRadius':
                 this.perceptionRadius = value;
+                break;
+            case 'repelRadius':
+                this.repelRadius = value;
                 break;
             default:
                 throw 'Unsupported key passed to setValues()';
@@ -220,11 +225,18 @@ class AutonomousAgent {
             const distance = P5.Vector.dist(agents[i].pos, this.pos);
             if (distance > this.perceptionRadius) continue;
 
+            // alignment
             alignment.add(agents[i].velocity);
-            cohesion.add(agents[i].pos);
-            const diff = this.pos.copy().sub(agents[i].pos); //
-            // .div(distance); //
 
+            // cohesion
+            // @todo: scale the force applied to cohesion based on the distance between two bodies
+            // distant objects extert less force
+            // const ratio = (this.perceptionRadius - distance) / this.perceptionRadius;
+            distance > this.repelRadius && cohesion.add(agents[i].pos);
+            const diff = this.pos.copy().sub(agents[i].pos); //
+            // .div(ratio); //
+
+            // separation
             separation.add(diff);
 
             this.p5.stroke(20);
