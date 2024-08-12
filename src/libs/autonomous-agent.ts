@@ -202,12 +202,12 @@ class AutonomousAgent {
         return this.seek(targetPos);
     }
 
-    pathFollow(path: InteractivePath): P5.Vector {
+    pathFollow(path: InteractivePath, isPointWithinSegment = false): P5.Vector {
         const lookahead = 50;
         const target = this.velocity.copy().normalize().mult(lookahead).add(this.pos);
         this.p5.strokeWeight(1);
         this.p5.stroke(255);
-        const closest = path.getClosestSegment(target.x, target.y);
+        const closest = path.getClosestSegment(target.x, target.y, isPointWithinSegment);
         if (closest.length && closest.length > path.radius && closest.intersectionPosition) {
             return this.seek(closest.intersectionPosition);
         }

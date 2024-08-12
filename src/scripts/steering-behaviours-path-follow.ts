@@ -75,7 +75,6 @@ const sketch = (p5: P5) => {
                 p5.createVector(250, 150),
                 p5.createVector(550, 250),
                 p5.createVector(730, 150),
-                p5.createVector(850, 300),
                 p5.createVector(800, 500),
                 p5.createVector(400, 600)
             ]
@@ -96,7 +95,7 @@ const sketch = (p5: P5) => {
 
     function pathFollow(path: InteractivePath, agents: AutonomousAgent[]) {
         for (let i = 0; i < agents.length; i++) {
-            const force = agents[i].pathFollow(path);
+            const force = agents[i].pathFollow(path, true);
             agents[i].applyForces(force).update().draw();
         }
     }
