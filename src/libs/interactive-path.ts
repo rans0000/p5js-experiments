@@ -35,7 +35,11 @@ class InteractivePath {
         return this.points;
     }
 
-    getClosestSegment(x: number, y: number): { length?: number; intersectionPosition?: P5.Vector } {
+    getClosestSegment(
+        x: number,
+        y: number,
+        isPointWithinSegment = false
+    ): { length?: number; intersectionPosition?: P5.Vector } {
         const queryPoint = this.p5.createVector(x, y);
         let shortestLength: number | undefined = undefined;
         let shortestPoint: P5.Vector | undefined;
@@ -54,10 +58,18 @@ class InteractivePath {
                 const line = P5.Vector.sub(points[i][curr], points[i][prev]);
                 const mouse = P5.Vector.sub(queryPoint, points[i][prev]);
                 const projection = mouse.dot(line);
-                const projectionVector = line
-                    .copy()
-                    .normalize()
-                    .setMag(this.p5.constrain(projection / line.magSq(), 0, 1) * line.mag());
+                const ratio = projection / line.magSq();
+
+                const temp = line.copy().normalize();
+                const projectionVector = isPointWithinSegment
+                    ? temp.setMag(ratio * line.mag())
+                    : temp.setMag(this.p5.constrain(ratio, 0, 1) * line.mag());
+
+                if (isPointWithinSegment && (ratio < 0 || ratio > 1)) {
+                    prev = curr;
+                    continue;
+                }
+
                 const projectionPos = projectionVector.copy().add(points[i][prev]);
                 const distanceToSegment = projectionPos.copy().sub(queryPoint).magSq();
                 if (shortestLength === undefined || distanceToSegment < shortestLength) {

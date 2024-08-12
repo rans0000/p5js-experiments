@@ -12,6 +12,7 @@ let path: InteractivePath;
 const sketch = (p5: P5) => {
     let options = {
         mode: 'view' as TMode,
+        findOnlyWithinSegment: false,
         clear: clear
     };
 
@@ -20,7 +21,6 @@ const sketch = (p5: P5) => {
     }
 
     function toggleDrawMode(mode: TMode) {
-        console.log(mode);
         switch (mode) {
             case 'view':
                 path?.stopPainting();
@@ -37,6 +37,7 @@ const sketch = (p5: P5) => {
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
     gui.add(options, 'mode', ['view', 'draw']).onChange(toggleDrawMode);
+    gui.add(options, 'findOnlyWithinSegment').name('Find Within Segment');
     gui.add(options, 'clear').name('Clear Canvas');
 
     //setup
@@ -77,13 +78,19 @@ const sketch = (p5: P5) => {
         }
     };
 
+    p5.keyPressed = (event: KeyboardEvent) => {
+        if (event.keyCode === p5.ESCAPE) {
+            p5.isLooping() ? p5.noLoop() : p5.loop();
+        }
+    };
+
     //draw
     p5.draw = () => {
         p5.clear();
         collection.forEach((item) => {
             item.update(p5.deltaTime).draw();
             if (item instanceof InteractivePath && item.getPoints().length && options.mode === 'view') {
-                const closest = item.getClosestSegment(p5.mouseX, p5.mouseY);
+                const closest = item.getClosestSegment(p5.mouseX, p5.mouseY, options.findOnlyWithinSegment);
                 if (closest.intersectionPosition) {
                     drawHelper(p5, closest.intersectionPosition);
                 }
@@ -101,6 +108,7 @@ function drawHelper(p5: P5, intersectionPosition: P5.Vector) {
     const my = p5.mouseY;
 
     p5.stroke(0, 200, 128);
+    p5.strokeWeight(2);
     p5.line(mx, my, intersectionPosition.x, intersectionPosition.y);
 
     p5.strokeWeight(0);
