@@ -23,17 +23,17 @@ const sketch = (p5: P5) => {
     document.getElementById('gui')?.appendChild(gui.domElement);
 
     gui.add(options, 'showHelpers').onChange((val) =>
-        agents.forEach((agent, i) => {
+        agents.forEach((agent) => {
             agent.setValues('showHelpers', val);
         })
     );
     gui.add(options, 'maxSpeed', 0.1, 10, 0.1).onChange((val) =>
-        agents.forEach((agent, i) => {
+        agents.forEach((agent) => {
             agent.setValues('maxSpeed', val);
         })
     );
     gui.add(options, 'maxForce', 0.01, 2, 0.01).onChange((val) =>
-        agents.forEach((agent, i) => {
+        agents.forEach((agent) => {
             agent.setValues('maxForce', val);
         })
     );

@@ -2,7 +2,7 @@ import P5 from 'p5';
 import { TAutonomousAgentConfig, TGroupBehaviour } from '../utils/types';
 import InteractivePath from './interactive-path';
 
-type Keys = 'maxSpeed' | 'maxForce' | 'perceptionRadius' | 'repelRadius' | 'showHelpers';
+type Keys = 'maxSpeed' | 'maxForce' | 'perceptionRadius' | 'repelRadius' | 'showHelpers' | 'visibilityAngle';
 let id = -1;
 class AutonomousAgent {
     id: number;
@@ -19,10 +19,11 @@ class AutonomousAgent {
     material: P5.Color;
     perceptionRadius: number;
     repelRadius: number;
+    visibilityAngle: number;
     wrapOnScreenEdge: boolean;
     showHelpers: boolean;
 
-    constructor(p5: P5, _config: Partial<TAutonomousAgentConfig>) {
+    constructor(p5: P5, _config?: Partial<TAutonomousAgentConfig>) {
         const defaultConfig: TAutonomousAgentConfig = {
             pos: p5.createVector(0, 0),
             mass: 1,
@@ -36,6 +37,7 @@ class AutonomousAgent {
             material: p5.color('#00ffff'),
             perceptionRadius: 30,
             repelRadius: 20,
+            visibilityAngle: Math.PI / 3,
             wrapOnScreenEdge: false,
             showHelpers: false
         };
@@ -54,6 +56,8 @@ class AutonomousAgent {
         this.r = config.r;
         this.material = config.material;
         this.perceptionRadius = config.perceptionRadius;
+        this.repelRadius = config.repelRadius;
+        this.visibilityAngle = config.visibilityAngle;
         this.wrapOnScreenEdge = config.wrapOnScreenEdge;
         this.showHelpers = config.showHelpers;
 
@@ -75,6 +79,9 @@ class AutonomousAgent {
                 case 'repelRadius':
                     this.repelRadius = value;
                     break;
+                case 'visibilityAngle':
+                    this.visibilityAngle = value;
+                    break;
 
                 default:
                     throw 'Unsupported key passed to setValues()';
@@ -94,8 +101,8 @@ class AutonomousAgent {
     draw() {
         this.p5.push();
         this.p5.translate(this.pos.x, this.pos.y);
-        this.showHelpers && this.drawHelpers();
         this.p5.rotate(this.velocity.heading());
+        this.showHelpers && this.drawHelpers();
         this.drawSprite();
         this.p5.pop();
         return this;
@@ -105,7 +112,6 @@ class AutonomousAgent {
         this.velocity.add(this.acceleration.limit(this.maxForce));
         this.velocity.limit(this.maxSpeed);
         this.pos.add(this.velocity);
-        // this.wrapOnScreenEdge && this.wrapScreen();
         this.wrapOnScreenEdge && this.constraintWithinWindow(this.pos.x, this.pos.y);
         this.acceleration.set(0, 0);
         return this;
@@ -138,8 +144,12 @@ class AutonomousAgent {
         this.velocity.mag() < this.maxSpeed ? this.p5.stroke(0, 80, 50) : this.p5.stroke(50);
         this.p5.strokeWeight(1);
         this.p5.circle(0, 0, this.perceptionRadius);
+        // visibility radius
+        this.p5.fill(255, 255, 255, 0.3);
+        this.p5.arc(0, 0, this.perceptionRadius, this.perceptionRadius, -this.visibilityAngle, this.visibilityAngle);
         // draw heading
-        const temp = this.velocity.copy().mult(20);
+
+        const temp = this.p5.createVector(1, 0).setMag(this.velocity.mag()).mult(20);
         this.p5.line(0, 0, temp.x, temp.y);
         return this;
     }
@@ -222,8 +232,10 @@ class AutonomousAgent {
 
         for (let i = 0; i < numberOfAgents; i++) {
             if (agents[i] === this) continue;
+
+            const angle = this.velocity.copy().normalize().dot(agents[i].velocity.copy().normalize());
             const distance = P5.Vector.dist(agents[i].pos, this.pos);
-            if (distance > this.perceptionRadius) continue;
+            if (distance > this.perceptionRadius || angle > this.visibilityAngle) continue;
 
             // alignment
             alignment.add(agents[i].velocity);
@@ -231,10 +243,13 @@ class AutonomousAgent {
             // cohesion
             // @todo: scale the force applied to cohesion based on the distance between two bodies
             // distant objects extert less force
-            // const ratio = (this.perceptionRadius - distance) / this.perceptionRadius;
+            const ratio = (this.perceptionRadius - distance) / this.perceptionRadius;
+
             distance > this.repelRadius && cohesion.add(agents[i].pos);
-            const diff = this.pos.copy().sub(agents[i].pos); //
-            // .div(ratio); //
+            const diff = this.pos
+                .copy()
+                .sub(agents[i].pos) //
+                .div(ratio); //
 
             // separation
             separation.add(diff);
@@ -268,21 +283,6 @@ class AutonomousAgent {
         if (y < 0) this.pos.y = innerHeight;
         if (y > innerHeight) this.pos.y = 0;
     }
-
-    // wrapScreen() {
-    //     const { innerWidth, innerHeight } = window;
-
-    //     if (this.pos.x < 0) {
-    //         this.pos.x = innerWidth;
-    //     } else if (this.pos.x > innerWidth) {
-    //         this.pos.x = 0;
-    //     }
-    //     if (this.pos.y < 0) {
-    //         this.pos.y = innerHeight;
-    //     } else if (this.pos.y > innerHeight) {
-    //         this.pos.y = 0;
-    //     }
-    // }
 }
 
 export default AutonomousAgent;

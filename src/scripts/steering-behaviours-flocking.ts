@@ -18,6 +18,7 @@ const sketch = (p5: P5) => {
         maxSpeed: 2,
         maxForce: 0.03,
         perceptionRadius: 70,
+        visibilityAngle: Math.PI / 3,
         repelRadius: 40
     };
 
@@ -26,27 +27,32 @@ const sketch = (p5: P5) => {
     document.getElementById('gui')?.appendChild(gui.domElement);
 
     gui.add(options, 'showHelpers').onChange((val) =>
-        agents.forEach((agent, i) => {
+        agents.forEach((agent) => {
             agent.setValues('showHelpers', val);
         })
     );
     gui.add(options, 'maxSpeed', 0.1, 10, 0.1).onChange((val) =>
-        agents.forEach((agent, i) => {
+        agents.forEach((agent) => {
             agent.setValues('maxSpeed', val);
         })
     );
     gui.add(options, 'maxForce', 0.01, 2, 0.01).onChange((val) =>
-        agents.forEach((agent, i) => {
+        agents.forEach((agent) => {
             agent.setValues('maxForce', val);
         })
     );
     gui.add(options, 'perceptionRadius', 0.01, 200, 1).onChange((val) =>
-        agents.forEach((agent, i) => {
+        agents.forEach((agent) => {
             agent.setValues('perceptionRadius', val);
         })
     );
+    gui.add(options, 'visibilityAngle', -Math.PI, Math.PI, 0.01).onChange((val) =>
+        agents.forEach((agent) => {
+            agent.setValues('visibilityAngle', val);
+        })
+    );
     gui.add(options, 'repelRadius', 0.01, 200, 1).onChange((val) =>
-        agents.forEach((agent, i) => {
+        agents.forEach((agent) => {
             agent.setValues('repelRadius', val);
         })
     );
@@ -87,11 +93,13 @@ const sketch = (p5: P5) => {
         for (let i = 0; i < 20; i++) {
             agents.push(
                 new AutonomousAgent(p5, {
+                    showHelpers: options.showHelpers,
                     pos: p5.createVector(p5.random(window.innerWidth), p5.random(window.innerHeight)),
                     velocity: P5.Vector.random2D().setMag(options.maxSpeed),
                     maxSpeed: options.maxSpeed,
                     maxForce: options.maxForce,
                     perceptionRadius: options.perceptionRadius,
+                    visibilityAngle: options.visibilityAngle,
                     wrapOnScreenEdge: true
                 })
             );

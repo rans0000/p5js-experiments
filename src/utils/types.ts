@@ -45,6 +45,7 @@ export type TAutonomousAgentConfig = {
     material: P5.Color;
     perceptionRadius: number;
     repelRadius: number;
+    visibilityAngle: number;
     wrapOnScreenEdge: boolean;
     showHelpers: boolean;
 };
