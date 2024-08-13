@@ -12,3 +12,7 @@ export enum MOUSE_BTN {
     MIDDLE,
     RIGHT
 }
+export enum Gamer {
+    PLAYER,
+    AI
+}
