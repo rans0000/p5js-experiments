@@ -161,3 +161,17 @@ ul {
         margin-bottom: 1rem;
     }
 }
+
+.tic-tac-toe {
+    &__score {
+        left: 0;
+        position: absolute;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-transform: uppercase;
+    }
+}

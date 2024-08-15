@@ -1,10 +1,12 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import TicTacToe from 'src/libs/tictactoe';
-import { TGameStatus } from 'src/utils/utils';
+import { Gamer, TGameStatus } from 'src/utils/utils';
 
 /**--------------------------------- */
 // variables & types
+const scoreContainer = document.getElementById('score-card');
+const statusContainer = document.getElementById('status');
 let board: TicTacToe;
 
 /**--------------------------------- */
@@ -21,6 +23,7 @@ const sketch = (p5: P5) => {
     gui.add(options, 'showHelpers');
     gui.add(options, 'size', 200, 500, 10).onChange((val) => {
         board.setValues('size', val);
+        if (scoreContainer) scoreContainer.style.top = `${(window.innerHeight + val) / 2 + 30}px`;
     });
 
     /** setup */
@@ -31,12 +34,18 @@ const sketch = (p5: P5) => {
         p5.pixelDensity(1);
         p5.colorMode(p5.HSB);
         window.addEventListener('resize', () => resizeDisplay(p5));
+        // setup markup
+        if (scoreContainer) scoreContainer.style.top = `${(window.innerHeight + options.size) / 2 + 30}px`;
+        scoreContainer?.addEventListener('submit', (event: FormDataEvent) => {
+            event.preventDefault();
+            scoreContainer.style.display = 'none';
+            board.resetGame();
+        });
         init(p5);
         // p5.noLoop();
 
         // setup the board
         board = new TicTacToe(p5, { showHelpers: options.showHelpers, size: options.size, onResolve: onResolve });
-        // console.log(board.cells.map((t) => t.owner));
     };
 
     /** draw */
@@ -57,9 +66,25 @@ const sketch = (p5: P5) => {
         p5.background(200, 60, 10);
     }
 
-    function onResolve(status: TGameStatus) {
-        console.log(status);
-        // board.resetGame();
+    function onResolve(game: TGameStatus) {
+        console.log(game);
+        let text = '';
+        switch (game.status) {
+            case Gamer.PLAYER:
+                text = "Player 'X' Wins!!";
+                break;
+            case Gamer.AI:
+                text = "Player 'O' Wins!!";
+                break;
+            case 'draw':
+                text = 'Game is a Draw';
+                break;
+            default:
+                text = 'Hey there!!';
+                break;
+        }
+        if (scoreContainer) scoreContainer.style.display = 'flex';
+        if (statusContainer) statusContainer.innerText = text;
     }
 
     /**--------------------------------- */
