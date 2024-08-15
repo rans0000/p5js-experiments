@@ -1,6 +1,7 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import TicTacToe from 'src/libs/tictactoe';
+import { TGameStatus } from 'src/utils/utils';
 
 /**--------------------------------- */
 // variables & types
@@ -34,8 +35,8 @@ const sketch = (p5: P5) => {
         // p5.noLoop();
 
         // setup the board
-        board = new TicTacToe(p5, { showHelpers: options.showHelpers, size: options.size });
-        console.log(board.cells.map((t) => t.owner));
+        board = new TicTacToe(p5, { showHelpers: options.showHelpers, size: options.size, onResolve: onResolve });
+        // console.log(board.cells.map((t) => t.owner));
     };
 
     /** draw */
@@ -54,6 +55,11 @@ const sketch = (p5: P5) => {
 
     function init(p5: P5) {
         p5.background(200, 60, 10);
+    }
+
+    function onResolve(status: TGameStatus) {
+        console.log(status);
+        // board.resetGame();
     }
 
     /**--------------------------------- */

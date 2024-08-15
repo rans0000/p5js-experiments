@@ -16,3 +16,7 @@ export enum Gamer {
     PLAYER,
     AI
 }
+export type TGameStatus = {
+    filledCells: number;
+    status: Gamer | undefined | 'draw';
+};
