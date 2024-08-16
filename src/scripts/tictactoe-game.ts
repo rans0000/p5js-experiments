@@ -67,8 +67,8 @@ const sketch = (p5: P5) => {
     }
 
     function onResolve(game: TGameStatus) {
-        console.log(game);
         let text = '';
+
         switch (game.status) {
             case Gamer.PLAYER:
                 text = "Player 'X' Wins!!";

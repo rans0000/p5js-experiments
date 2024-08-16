@@ -1,3 +1,4 @@
+import p5 from 'p5';
 import { TEdges } from './types';
 
 export const defaultEntityConfig = { r: 5 };
@@ -16,7 +17,12 @@ export enum Gamer {
     PLAYER,
     AI
 }
+export type TTicTacToeCell = {
+    pos: p5.Vector;
+    owner: Gamer | undefined;
+};
 export type TGameStatus = {
     filledCells: number;
     status: Gamer | undefined | 'draw';
+    cells: TTicTacToeCell[];
 };
