@@ -1,9 +1,10 @@
 import P5 from 'p5';
 import { Gamer } from 'src/utils/utils';
 
+type Keys = 'size' | 'showHelpers';
+
 type TCrossBoard = {
     size: number;
-    offset: P5.Vector;
     showHelpers: boolean;
     currentPlayer: Gamer;
 };
@@ -25,17 +26,43 @@ class CrossBoard {
     constructor(p5: P5, _config?: Partial<TCrossBoard>) {
         const config: TCrossBoard = {
             size: 400,
-            offset: p5.createVector(0, 0),
             showHelpers: false,
             currentPlayer: Gamer.PLAYER,
             ..._config
         };
+        const offsetX = (window.innerWidth - config.size) / 2;
+        const offsetY = (window.innerHeight - config.size) / 2;
+
         this.p5 = p5;
         this.size = config.size;
-        this.offset = config.offset;
+        this.offset = p5.createVector(offsetX, offsetY);
         this.showHelpers = config.showHelpers;
-        this.points = buildBoard(this.p5, this.size / 5, this.offset);
+        this.points = buildBoard(this.p5, this.size / 5);
         this.cellRadius = 50;
+    }
+
+    setValues(key: Keys, value: number | boolean) {
+        if (typeof value === 'number') {
+            switch (key) {
+                case 'size':
+                    this.size = value;
+                    const offsetX = (window.innerWidth - value) / 2;
+                    const offsetY = (window.innerHeight - value) / 2;
+                    this.offset = this.offset.set(offsetX, offsetY);
+                    break;
+                default:
+                    throw 'Unsupported key passed to setValues()';
+            }
+        }
+        if (typeof value === 'boolean') {
+            switch (key) {
+                case 'showHelpers':
+                    this.showHelpers = value;
+                    break;
+                default:
+                    throw 'Unsupported key passed to setValues()';
+            }
+        }
     }
 
     update(deltaTime: number): this {
@@ -46,50 +73,63 @@ class CrossBoard {
         this.p5.cursor(this.p5.ARROW);
         const dimension = this.size / 5;
         const length = this.points.length;
-        for (let i = 0; i < length; i++) {
-            // draw the board
-            this.p5.strokeWeight(2);
-            this.p5.stroke(255);
-            this.p5.circle(this.points[i].pos.x * dimension, this.points[i].pos.y * dimension, 10);
+        const { x: offsetX, y: offsetY } = this.offset;
 
-            this.points[i].neighbourIndex.forEach((index) => {
-                this.p5.stroke(255);
-                this.p5.line(
-                    this.points[i].pos.x,
-                    this.points[i].pos.y,
-                    this.points[index].pos.x,
-                    this.points[index].pos.y
-                );
+        for (let i = 0; i < length; i++) {
+            const { x: x1, y: y1 } = this.points[i].pos;
+            const currentPoint = this.p5.createVector(offsetX + x1 * dimension, offsetY + y1 * dimension);
+
+            // draw lines to neighbours
+            this.points[i].neighbourIndex.forEach((neighbour) => {
+                const { x: x2, y: y2 } = this.points[neighbour].pos;
+                this.p5.strokeWeight(2);
+                this.p5.stroke(180);
+                this.p5.line(currentPoint.x, currentPoint.y, offsetX + x2 * dimension, offsetY + y2 * dimension);
             });
 
-            // draw hover
-            const distance = this.p5.createVector(this.p5.mouseX, this.p5.mouseY).sub(this.points[i].pos).mag();
-            if (distance < this.cellRadius) {
-                // console.log(distance);
+            // draw hover point
+            const distance = this.p5.createVector(this.p5.mouseX, this.p5.mouseY).sub(currentPoint).mag();
 
+            if (distance < this.cellRadius) {
                 this.p5.cursor(this.p5.HAND);
                 this.p5.noStroke();
                 this.p5.fill(255);
                 this.p5.circle(
-                    this.points[i].pos.x,
-                    this.points[i].pos.y,
+                    currentPoint.x,
+                    currentPoint.y,
                     this.p5.constrain(this.cellRadius - distance, 0, this.cellRadius * 0.3)
                 );
             }
         }
-        // draw connections
+
+        // draw helpers
         if (this.showHelpers) {
             for (let i = 0; i < length; i++) {
-                const distance = this.p5.createVector(this.p5.mouseX, this.p5.mouseY).sub(this.points[i].pos).mag();
+                const { x: x1, y: y1 } = this.points[i].pos;
+                const currentPoint = this.p5.createVector(offsetX + x1 * dimension, offsetY + y1 * dimension);
+
+                // points texts
+                this.p5.stroke(255);
+                this.p5.strokeWeight(1);
+                this.p5.noFill();
+                this.showHelpers &&
+                    this.p5.text(
+                        `${currentPoint.x} ${currentPoint.y} [${this.points[i].id}]`,
+                        currentPoint.x + 15,
+                        currentPoint.y - 5
+                    );
+
+                // connected points
+                const distance = this.p5.createVector(this.p5.mouseX, this.p5.mouseY).sub(currentPoint).mag();
                 if (distance > this.cellRadius) continue;
-                this.points[i].neighbourIndex.forEach((index) => {
+                this.points[i].neighbourIndex.forEach((neighbour) => {
                     this.p5.stroke(255, 200, 100);
                     this.p5.strokeWeight(8);
                     this.p5.line(
-                        this.points[i].pos.x,
-                        this.points[i].pos.y,
-                        this.points[index].pos.x,
-                        this.points[index].pos.y
+                        currentPoint.x,
+                        currentPoint.y,
+                        offsetX + this.points[neighbour].pos.x * dimension,
+                        offsetY + this.points[neighbour].pos.y * dimension
                     );
                 });
             }
@@ -102,7 +142,8 @@ class CrossBoard {
 /**--------------------------------- */
 // functions
 
-function buildBoard(p5: P5, dimension: number, offset: P5.Vector) {
+function buildBoard(p5: P5, dimension: number) {
+    6;
     const cells: TCell[] = [
         // { id: 0, pos: p5.createVector(0, 0), neighbourIndex: [[1,2], [3,6], [5,10]], owner: undefined },
         { id: 0, pos: p5.createVector(0, 0), neighbourIndex: [1, 3, 5], owner: undefined },
@@ -125,7 +166,7 @@ function buildBoard(p5: P5, dimension: number, offset: P5.Vector) {
     ];
 
     for (const cell of cells) {
-        cell.pos = p5.createVector(cell.pos.x * dimension, cell.pos.y * dimension).add(offset);
+        cell.pos = p5.createVector(cell.pos.x, cell.pos.y);
     }
 
     return cells;
