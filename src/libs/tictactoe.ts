@@ -1,17 +1,19 @@
 import P5 from 'p5';
 import { Gamer, TGameStatus, TTicTacToeCell } from 'src/utils/utils';
 
+const SIZE = 3;
+
 type TTicTacToe = {
     showHelpers: boolean;
     cells: TTicTacToeCell[];
     size: number;
     currentTurn: Gamer;
-    status: Gamer | undefined | 'draw';
+    status: Gamer | undefined;
     winnerCells: TTicTacToeCell[];
     onResolve?: (status: TGameStatus) => void;
 };
 
-type Keys = 'size';
+type Keys = 'size' | 'showHelpers';
 
 class TicTacToe {
     p5: P5;
@@ -27,7 +29,7 @@ class TicTacToe {
         const config: TTicTacToe = {
             showHelpers: false,
             cells: buildCells(p5),
-            size: 300,
+            size: 400,
             status: undefined,
             currentTurn: Gamer.PLAYER,
             winnerCells: [],
@@ -43,29 +45,45 @@ class TicTacToe {
         this.onResolve = config.onResolve;
 
         this.p5.canvas.addEventListener('click', this.onClick.bind(this));
+
+        if (this.currentTurn === Gamer.AI) {
+            const index = this.calculateBestMove(this.cells);
+            if (index > -1) this.cells[index].owner = Gamer.AI;
+            this.currentTurn = Gamer.PLAYER;
+        }
     }
 
-    setValues(key: Keys, value: number) {
-        switch (key) {
-            case 'size':
-                this.size = value;
-                break;
-
-            default:
-                throw 'Unsupported key passed to setValues()';
+    setValues(key: Keys, value: number | boolean) {
+        if (typeof value === 'number') {
+            switch (key) {
+                case 'size':
+                    this.size = value;
+                    break;
+                default:
+                    throw 'Unsupported key passed to setValues()';
+            }
+        }
+        if (typeof value === 'boolean') {
+            switch (key) {
+                case 'showHelpers':
+                    this.showHelpers = value;
+                    break;
+                default:
+                    throw 'Unsupported key passed to setValues()';
+            }
         }
     }
 
     onClick(event: MouseEvent) {
         if (this.status !== undefined) return;
 
-        const width = this.size / 3;
+        const width = this.size / SIZE;
         const { innerWidth, innerHeight } = window;
         const offsetX = (innerWidth - this.size) / 2;
         const offsetY = (innerHeight - this.size) / 2;
-        const size = 3;
         const { clientX, clientY } = event;
 
+        // set selected cell
         for (const cell of this.cells) {
             const startX = offsetX + cell.pos.x * width;
             const startY = offsetY + cell.pos.y * width;
@@ -73,81 +91,143 @@ class TicTacToe {
             if (
                 cell.owner === undefined &&
                 clientX > startX &&
-                clientX < startX + this.size / size &&
+                clientX < startX + this.size / SIZE &&
                 clientY > startY &&
-                clientY < startY + this.size / size
+                clientY < startY + this.size / SIZE
             ) {
                 cell.owner = this.currentTurn;
                 this.currentTurn = this.currentTurn === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
             }
         }
 
-        const game = this.checkGameStatus();
-        this.status = game.status;
+        // ai calculations
+        if (this.currentTurn === Gamer.AI) {
+            const index = this.calculateBestMove(this.cells);
+            // debug && console.log(index);
+
+            if (index > -1) this.cells[index].owner = Gamer.AI;
+            this.currentTurn = Gamer.PLAYER;
+        }
+
+        // check win/draw status
+        const game = this.checkGameStatus(this.cells);
+        this.status = game.winner;
         this.winnerCells = game.cells;
 
-        if (game.filledCells === 0 || game.status !== undefined) {
+        if (game.filledCells === 0 || game.winner !== undefined) {
             this.onResolve && this.onResolve(game);
         }
     }
 
-    checkGameStatus(): TGameStatus {
+    calculateBestMove(cells: TTicTacToeCell[] = []): number {
+        const dimension = SIZE * SIZE;
+        let bestScore = -Infinity;
+        let move: number = -1;
+        let depth = 0;
+
+        for (let i = 0; i < dimension; i++) {
+            if (cells[i].owner === undefined) {
+                cells[i].owner = Gamer.AI;
+                let score = this.minimax(cells, depth, false, i);
+                this.showHelpers && console.log('score: ', i, score);
+
+                cells[i].owner = undefined;
+                if (score >= bestScore) {
+                    bestScore = score;
+                    move = i;
+                }
+            }
+        }
+
+        return move;
+    }
+
+    minimax(cells: TTicTacToeCell[] = [], depth: number, isMaximizing: boolean, next: number): number {
+        const dimension = SIZE * SIZE;
+        const game = this.checkGameStatus(cells);
+
+        game.winner !== undefined && game.filledCells === 8 && console.log(game);
+
+        if (game.winner !== undefined) {
+            let ccc = printCells(cells);
+            const points = getPoints(game.winner, depth);
+            this.showHelpers && console.log(ccc, `C: ${next} P: ${points.toFixed(2)}  D: ${depth}`);
+
+            return points;
+        }
+        if (game.winner === undefined && game.filledCells === 0) return getPoints(game.winner, depth);
+
+        if (isMaximizing) {
+            let bestScore = -Infinity;
+            for (let i = 0; i < dimension; i++) {
+                // is spot available?
+                if (cells[i].owner === undefined) {
+                    cells[i].owner = Gamer.AI;
+                    let score = this.minimax(cells, depth + 1, false, i);
+                    let ccc = printCells(cells);
+                    cells[i].owner = undefined;
+                    bestScore = Math.max(score, bestScore);
+                }
+            }
+
+            return bestScore;
+        } else {
+            let bestScore = Infinity;
+            for (let i = 0; i < dimension; i++) {
+                // is spot available?
+                if (cells[i].owner === undefined) {
+                    cells[i].owner = Gamer.PLAYER;
+                    let score = this.minimax(cells, depth + 1, true, i);
+                    let ccc = printCells(cells);
+                    cells[i].owner = undefined;
+                    bestScore = Math.min(score, bestScore);
+                }
+            }
+            return bestScore;
+        }
+    }
+
+    checkGameStatus(cells: TTicTacToeCell[]): TGameStatus {
         let filledCells = 0;
-        let status: TGameStatus['status'];
-        let cells: TTicTacToeCell[] = [];
+        let winner: TGameStatus['winner'];
+        let victoryCells: TTicTacToeCell[] = [];
 
         // cheack filled cells
-        for (const cell of this.cells) {
+        for (const cell of cells) {
             if (cell.owner === undefined) ++filledCells;
         }
 
         // check for win
-        const size = 3;
-        for (let i = 0; i < size; i++) {
-            if (
-                this.cells[i].owner !== undefined &&
-                this.cells[i].owner === this.cells[i + size].owner &&
-                this.cells[i].owner === this.cells[i + 2 * size].owner
-            ) {
-                status = this.cells[i].owner;
-                cells = [this.cells[i], this.cells[i + size], this.cells[i + 2 * size]];
+        const dimension = SIZE;
+        for (let i = 0; i < dimension; i++) {
+            if (cells[i].owner !== undefined && areCellsEqual(cells[i], cells[i + dimension], cells[i + 2 * dimension])) {
+                winner = cells[i].owner;
+                victoryCells = [cells[i], cells[i + dimension], cells[i + 2 * dimension]];
                 break;
             }
-            if (
-                this.cells[i * size].owner !== undefined &&
-                this.cells[i * size].owner === this.cells[1 + i * size].owner &&
-                this.cells[i * size].owner === this.cells[2 + i * size].owner
-            ) {
-                status = this.cells[i * size].owner;
-                cells = [this.cells[i * size], this.cells[1 + i * size], this.cells[2 + i * size]];
-                break;
-            }
-        }
-        if (
-            this.cells[0].owner !== undefined &&
-            this.cells[0].owner === this.cells[4].owner &&
-            this.cells[0].owner === this.cells[8].owner
-        ) {
-            status = this.cells[0].owner;
-            cells = [this.cells[0], this.cells[4], this.cells[8]];
-        }
-        if (
-            this.cells[2].owner !== undefined &&
-            this.cells[2].owner === this.cells[4].owner &&
-            this.cells[2].owner === this.cells[6].owner
-        ) {
-            status = this.cells[2].owner;
-            cells = [this.cells[2], this.cells[4], this.cells[6]];
-        }
 
-        if (filledCells === 0 && status === undefined) {
-            status = 'draw';
+            if (
+                cells[i * dimension].owner !== undefined &&
+                areCellsEqual(cells[i * dimension], cells[1 + i * dimension], cells[2 + i * dimension])
+            ) {
+                winner = cells[i * dimension].owner;
+                victoryCells = [cells[i * dimension], cells[1 + i * dimension], cells[2 + i * dimension]];
+                break;
+            }
+        }
+        if (cells[0].owner !== undefined && areCellsEqual(cells[0], cells[4], cells[8])) {
+            winner = cells[0].owner;
+            victoryCells = [cells[0], cells[4], cells[8]];
+        }
+        if (cells[2].owner !== undefined && areCellsEqual(cells[2], cells[4], cells[6])) {
+            winner = cells[2].owner;
+            victoryCells = [cells[2], cells[4], cells[6]];
         }
 
         return {
             filledCells,
-            status,
-            cells
+            winner,
+            cells: victoryCells
         };
     }
 
@@ -156,6 +236,12 @@ class TicTacToe {
         this.currentTurn = currentTurn;
         this.status = undefined;
         this.winnerCells = [];
+
+        if (this.currentTurn === Gamer.AI) {
+            const index = this.calculateBestMove(this.cells);
+            if (index > -1) this.cells[index].owner = Gamer.AI;
+            this.currentTurn = Gamer.PLAYER;
+        }
     }
 
     update(deltaTime: number): this {
@@ -164,11 +250,11 @@ class TicTacToe {
 
     draw(): this {
         this.p5.cursor(this.p5.ARROW);
-        const width = this.size / 3;
+        const width = this.size / SIZE;
         const { innerWidth, innerHeight } = window;
         const offsetX = (innerWidth - this.size) / 2;
         const offsetY = (innerHeight - this.size) / 2;
-        const size = 3;
+        const dimension = SIZE;
         const { mouseX, mouseY } = this.p5;
 
         for (const cell of this.cells) {
@@ -182,13 +268,20 @@ class TicTacToe {
             this.p5.rectMode(this.p5.CORNER);
             this.p5.rect(startX, startY, width, width);
 
+            // draw cell index
+            if (this.showHelpers) {
+                this.p5.textAlign(this.p5.LEFT, this.p5.TOP);
+                this.p5.textSize(15);
+                this.p5.text(cell.pos.x + cell.pos.y * SIZE, startX, startY);
+            }
+
             if (cell.owner !== undefined) {
                 this.p5.strokeWeight(0);
                 this.p5.fill(255);
                 this.p5.textAlign(this.p5.CENTER, this.p5.CENTER);
-                this.p5.textSize(this.size / size);
+                this.p5.textSize(this.size / dimension);
                 const text = cell.owner === Gamer.PLAYER ? 'X' : 'O';
-                this.p5.text(text, startX + this.size / size / 2, startY + this.size / size / 2);
+                this.p5.text(text, startX + this.size / dimension / 2, startY + this.size / dimension / 2);
             }
 
             // draw winner cells
@@ -197,10 +290,10 @@ class TicTacToe {
                 this.p5.stroke(0, 100, 100);
 
                 this.p5.line(
-                    offsetX + this.size / size / 2 + this.winnerCells[0].pos.x * width,
-                    offsetY + this.size / size / 2 + this.winnerCells[0].pos.y * width,
-                    offsetX + this.size / size / 2 + this.winnerCells[2].pos.x * width,
-                    offsetY + this.size / size / 2 + this.winnerCells[2].pos.y * width
+                    offsetX + this.size / dimension / 2 + this.winnerCells[0].pos.x * width,
+                    offsetY + this.size / dimension / 2 + this.winnerCells[0].pos.y * width,
+                    offsetX + this.size / dimension / 2 + this.winnerCells[2].pos.x * width,
+                    offsetY + this.size / dimension / 2 + this.winnerCells[2].pos.y * width
                 );
             }
 
@@ -209,9 +302,9 @@ class TicTacToe {
             if (
                 cell.owner === undefined &&
                 mouseX > startX &&
-                mouseX < startX + this.size / size &&
+                mouseX < startX + this.size / dimension &&
                 mouseY > startY &&
-                mouseY < startY + this.size / size
+                mouseY < startY + this.size / dimension
             ) {
                 this.p5.cursor(this.p5.HAND);
             }
@@ -224,15 +317,37 @@ class TicTacToe {
 // functions
 
 function buildCells(p5: P5): TTicTacToeCell[] {
-    const size = 3;
+    const dimension = SIZE;
     const cells: TTicTacToeCell[] = [];
-    for (let i = 0; i < size * size; i++) {
+    for (let i = 0; i < dimension * dimension; i++) {
         cells.push({
-            pos: p5.createVector(i % size, Math.floor(i / size)),
+            pos: p5.createVector(i % dimension, Math.floor(i / dimension)),
             owner: undefined
         });
     }
     return cells;
+}
+
+function areCellsEqual(cell0: TTicTacToeCell, cell1: TTicTacToeCell, cell2: TTicTacToeCell): boolean {
+    return cell0.owner === cell1.owner && cell0.owner === cell2.owner;
+}
+
+function getPoints(val: number | undefined, depth: number) {
+    depth++;
+    // depth = 1;
+    return val === undefined ? 0 : val === 0 ? -10 / depth : 10 / depth;
+}
+
+function printCells(cells: TTicTacToeCell[] = []) {
+    let text = '';
+    for (let i = 0; i < SIZE; i++) {
+        for (let j = 0; j < SIZE; j++) {
+            const index = i * SIZE + j;
+            text += `${cells[index].owner === undefined ? '   ' : cells[index].owner === Gamer.AI ? ' O ' : ' X '}`;
+        }
+        text += '\n';
+    }
+    return text;
 }
 
 export default TicTacToe;

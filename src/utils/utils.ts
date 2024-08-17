@@ -23,6 +23,6 @@ export type TTicTacToeCell = {
 };
 export type TGameStatus = {
     filledCells: number;
-    status: Gamer | undefined | 'draw';
+    winner: Gamer | undefined;
     cells: TTicTacToeCell[];
 };

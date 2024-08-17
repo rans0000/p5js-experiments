@@ -13,14 +13,19 @@ let board: TicTacToe;
 // sketch
 const sketch = (p5: P5) => {
     const options = {
-        showHelpers: true,
-        size: 400
+        showHelpers: false,
+        size: 400,
+        currentTurn: Gamer.AI
     };
 
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
-    gui.add(options, 'showHelpers');
+    gui.add(options, 'showHelpers').onChange((val) => {
+        console.log(val);
+
+        board.setValues('showHelpers', val);
+    });
     gui.add(options, 'size', 200, 500, 10).onChange((val) => {
         board.setValues('size', val);
         if (scoreContainer) scoreContainer.style.top = `${(window.innerHeight + val) / 2 + 30}px`;
@@ -39,13 +44,19 @@ const sketch = (p5: P5) => {
         scoreContainer?.addEventListener('submit', (event: FormDataEvent) => {
             event.preventDefault();
             scoreContainer.style.display = 'none';
-            board.resetGame();
+            options.currentTurn = options.currentTurn === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
+            board.resetGame(options.currentTurn);
         });
         init(p5);
         // p5.noLoop();
 
         // setup the board
-        board = new TicTacToe(p5, { showHelpers: options.showHelpers, size: options.size, onResolve: onResolve });
+        board = new TicTacToe(p5, {
+            showHelpers: options.showHelpers,
+            size: options.size,
+            onResolve: onResolve,
+            currentTurn: options.currentTurn
+        });
     };
 
     /** draw */
@@ -69,15 +80,12 @@ const sketch = (p5: P5) => {
     function onResolve(game: TGameStatus) {
         let text = '';
 
-        switch (game.status) {
+        switch (game.winner) {
             case Gamer.PLAYER:
                 text = "Player 'X' Wins!!";
                 break;
             case Gamer.AI:
                 text = "Player 'O' Wins!!";
-                break;
-            case 'draw':
-                text = 'Game is a Draw';
                 break;
             default:
                 text = 'Hey there!!';
