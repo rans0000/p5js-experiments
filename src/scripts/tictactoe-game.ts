@@ -45,6 +45,10 @@ const sketch = (p5: P5) => {
             event.preventDefault();
             scoreContainer.style.display = 'none';
             options.currentTurn = options.currentTurn === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
+            if (options.currentTurn === Gamer.PLAYER) {
+                if (scoreContainer) scoreContainer.style.display = 'flex';
+                if (statusContainer) statusContainer.innerText = 'Start Game';
+            }
             board.resetGame(options.currentTurn);
         });
         init(p5);
@@ -88,7 +92,7 @@ const sketch = (p5: P5) => {
                 text = "Player 'O' Wins!!";
                 break;
             default:
-                text = 'Hey there!!';
+                text = 'Game is a Tie!!';
                 break;
         }
         if (scoreContainer) scoreContainer.style.display = 'flex';
