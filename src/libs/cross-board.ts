@@ -14,13 +14,19 @@ type TCell = {
     neighbourIndex: number[];
     owner: Gamer | undefined;
 };
-
+type TPawn = {
+    owner: Gamer;
+    point: TCell;
+    radius: number;
+};
 class CrossBoard {
     p5: P5;
     size: number;
     offset: P5.Vector;
     showHelpers: boolean;
     points: TCell[];
+    pawns: TPawn[];
+
     cellRadius: number;
 
     constructor(p5: P5, _config?: Partial<TCrossBoard>) {
@@ -37,7 +43,9 @@ class CrossBoard {
         this.size = config.size;
         this.offset = p5.createVector(offsetX, offsetY);
         this.showHelpers = config.showHelpers;
-        this.points = buildBoard(this.p5, this.size / 5);
+        const { points, pawns } = buildBoard(this.p5);
+        this.points = points;
+        this.pawns = pawns;
         this.cellRadius = 50;
     }
 
@@ -139,12 +147,33 @@ class CrossBoard {
     }
 }
 
+class Pawn {
+    p5: P5;
+    owner: Gamer;
+    point: TCell;
+    radius: number;
+
+    constructor(p5: P5, config: TPawn) {
+        this.p5 = p5;
+        this.owner = config.owner;
+        this.point = config.point;
+        this.radius = config.radius;
+    }
+
+    draw() {
+        return this;
+    }
+    update(deltaTime: number) {
+        return this;
+    }
+}
+
 /**--------------------------------- */
 // functions
 
-function buildBoard(p5: P5, dimension: number) {
-    6;
-    const cells: TCell[] = [
+function buildBoard(p5: P5) {
+    // build points
+    const points: TCell[] = [
         // { id: 0, pos: p5.createVector(0, 0), neighbourIndex: [[1,2], [3,6], [5,10]], owner: undefined },
         { id: 0, pos: p5.createVector(0, 0), neighbourIndex: [1, 3, 5], owner: undefined },
         { id: 1, pos: p5.createVector(2, 0), neighbourIndex: [0, 2, 3, 4], owner: undefined },
@@ -165,11 +194,14 @@ function buildBoard(p5: P5, dimension: number) {
         { id: 12, pos: p5.createVector(4, 4), neighbourIndex: [9, 7, 11], owner: undefined }
     ];
 
-    for (const cell of cells) {
-        cell.pos = p5.createVector(cell.pos.x, cell.pos.y);
+    for (const point of points) {
+        point.pos = p5.createVector(point.pos.x, point.pos.y);
     }
 
-    return cells;
+    // pawns
+    const pawns: TPawn[] = [];
+
+    return { points, pawns };
 }
 
 export default CrossBoard;

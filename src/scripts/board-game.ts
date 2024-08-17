@@ -12,7 +12,7 @@ let board: CrossBoard;
 const sketch = (p5: P5) => {
     const options = {
         size: 400,
-        showHelpers: true
+        showHelpers: false
     };
 
     const gui = new GUI({ autoPlace: false });
@@ -59,7 +59,7 @@ const sketch = (p5: P5) => {
             size: options.size,
             showHelpers: options.showHelpers
         });
-        console.log(board.points.map((p) => [p.pos.x, p.pos.y]));
+        // console.log(board.points.map((p) => [p.pos.x, p.pos.y]));
     }
 
     /**--------------------------------- */
