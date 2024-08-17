@@ -7,6 +7,7 @@ import { Gamer, TGameStatus } from 'src/utils/utils';
 // variables & types
 const scoreContainer = document.getElementById('score-card');
 const statusContainer = document.getElementById('status');
+const resetBtn = document.getElementById('btn-reset');
 let board: TicTacToe;
 
 /**--------------------------------- */
@@ -48,11 +49,13 @@ const sketch = (p5: P5) => {
             if (options.currentTurn === Gamer.PLAYER) {
                 if (scoreContainer) scoreContainer.style.display = 'flex';
                 if (statusContainer) statusContainer.innerText = 'Start Game';
+                if (resetBtn) resetBtn.style.display = 'none';
             }
             board.resetGame(options.currentTurn);
         });
+
+        //
         init(p5);
-        // p5.noLoop();
 
         // setup the board
         board = new TicTacToe(p5, {
@@ -97,6 +100,7 @@ const sketch = (p5: P5) => {
         }
         if (scoreContainer) scoreContainer.style.display = 'flex';
         if (statusContainer) statusContainer.innerText = text;
+        if (resetBtn) resetBtn.style.display = 'block';
     }
 
     /**--------------------------------- */

@@ -149,9 +149,11 @@ class TicTacToe {
         game.winner !== undefined && game.filledCells === 8 && console.log(game);
 
         if (game.winner !== undefined) {
-            let ccc = printCells(cells);
             const points = getPoints(game.winner, depth);
-            this.showHelpers && console.log(ccc, `C: ${next} P: ${points.toFixed(2)}  D: ${depth}`);
+            if (this.showHelpers) {
+                let ccc = printCells(cells);
+                console.log(ccc, `C: ${next} P: ${points.toFixed(2)}  D: ${depth}`);
+            }
 
             return points;
         }
@@ -164,7 +166,6 @@ class TicTacToe {
                 if (cells[i].owner === undefined) {
                     cells[i].owner = Gamer.AI;
                     let score = this.minimax(cells, depth + 1, false, i);
-                    let ccc = printCells(cells);
                     cells[i].owner = undefined;
                     bestScore = Math.max(score, bestScore);
                 }
@@ -178,7 +179,6 @@ class TicTacToe {
                 if (cells[i].owner === undefined) {
                     cells[i].owner = Gamer.PLAYER;
                     let score = this.minimax(cells, depth + 1, true, i);
-                    let ccc = printCells(cells);
                     cells[i].owner = undefined;
                     bestScore = Math.min(score, bestScore);
                 }
@@ -334,7 +334,6 @@ function areCellsEqual(cell0: TTicTacToeCell, cell1: TTicTacToeCell, cell2: TTic
 
 function getPoints(val: number | undefined, depth: number) {
     depth++;
-    // depth = 1;
     return val === undefined ? 0 : val === 0 ? -10 / depth : 10 / depth;
 }
 
