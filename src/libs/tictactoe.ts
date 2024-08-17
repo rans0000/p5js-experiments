@@ -2,6 +2,7 @@ import P5 from 'p5';
 import { Gamer, TGameStatus, TTicTacToeCell } from 'src/utils/utils';
 
 const SIZE = 3;
+let turns = 0;
 
 type TTicTacToe = {
     showHelpers: boolean;
@@ -102,11 +103,12 @@ class TicTacToe {
 
         // ai calculations
         if (this.currentTurn === Gamer.AI) {
+            turns = 0;
             const index = this.calculateBestMove(this.cells);
-            // debug && console.log(index);
 
             if (index > -1) this.cells[index].owner = Gamer.AI;
             this.currentTurn = Gamer.PLAYER;
+            console.log(turns);
         }
 
         // check win/draw status
@@ -124,11 +126,13 @@ class TicTacToe {
         let bestScore = -Infinity;
         let move: number = -1;
         let depth = 0;
+        let alpha = -Infinity;
+        let beta = Infinity;
 
         for (let i = 0; i < dimension; i++) {
             if (cells[i].owner === undefined) {
                 cells[i].owner = Gamer.AI;
-                let score = this.minimax(cells, depth, false, i);
+                let score = this.minimax(cells, depth, false, alpha, beta, i);
                 this.showHelpers && console.log('score: ', i, score);
 
                 cells[i].owner = undefined;
@@ -142,9 +146,18 @@ class TicTacToe {
         return move;
     }
 
-    minimax(cells: TTicTacToeCell[] = [], depth: number, isMaximizing: boolean, next: number): number {
+    minimax(
+        cells: TTicTacToeCell[] = [],
+        depth: number,
+        isMaximizing: boolean,
+        alpha: number,
+        beta: number,
+        next: number
+    ): number {
         const dimension = SIZE * SIZE;
         const game = this.checkGameStatus(cells);
+
+        turns++;
 
         game.winner !== undefined && game.filledCells === 8 && console.log(game);
 
@@ -165,9 +178,11 @@ class TicTacToe {
                 // is spot available?
                 if (cells[i].owner === undefined) {
                     cells[i].owner = Gamer.AI;
-                    let score = this.minimax(cells, depth + 1, false, i);
+                    let score = this.minimax(cells, depth + 1, false, alpha, beta, i);
                     cells[i].owner = undefined;
                     bestScore = Math.max(score, bestScore);
+                    alpha = Math.max(alpha, score);
+                    if (beta <= alpha) break;
                 }
             }
 
@@ -178,9 +193,11 @@ class TicTacToe {
                 // is spot available?
                 if (cells[i].owner === undefined) {
                     cells[i].owner = Gamer.PLAYER;
-                    let score = this.minimax(cells, depth + 1, true, i);
+                    let score = this.minimax(cells, depth + 1, true, alpha, beta, i);
                     cells[i].owner = undefined;
                     bestScore = Math.min(score, bestScore);
+                    beta = Math.min(beta, score);
+                    if (beta <= alpha) break;
                 }
             }
             return bestScore;
