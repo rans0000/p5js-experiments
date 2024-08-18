@@ -12,7 +12,7 @@ let board: CrossBoard;
 const sketch = (p5: P5) => {
     const options = {
         size: 400,
-        showHelpers: false
+        showHelpers: true
     };
 
     const gui = new GUI({ autoPlace: false });
