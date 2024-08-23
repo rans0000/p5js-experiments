@@ -11,7 +11,7 @@ type TPawn = {
     board: CrossBoard;
     owner: Gamer;
     pointIndex: number;
-    nextPoint: number | null;
+    nextPoint: number | number;
 
     id: number;
     pos: P5.Vector;
@@ -26,6 +26,7 @@ type TCrossBoard = {
     pawns: Pawn[];
     points: TCell[];
     currentPlayer: Gamer;
+    capturedIndex: number | undefined;
 
     size: number;
     showHelpers: boolean;
@@ -38,7 +39,7 @@ type TCell = {
     id: number;
     pos: P5.Vector;
     neighbourIndex: number[];
-    capturableIndex: (number | null)[];
+    capturableIndex: (number | undefined)[];
     pawnIndex: number | undefined;
 };
 
@@ -47,6 +48,7 @@ class CrossBoard {
     pawns: Pawn[];
     points: TCell[];
     currentPlayer: Gamer;
+    capturedIndex: number | undefined;
 
     size: number;
     showHelpers: boolean;
@@ -68,6 +70,7 @@ class CrossBoard {
         this.showHelpers = config.showHelpers;
         this.offset = p5.createVector(offsetX, offsetY);
         this.currentPlayer = config.currentPlayer;
+        this.capturedIndex = undefined;
         this.pawns = buildPawns(p5, this);
         this.points = buildBoard(this.p5);
         this.mode = 'normal';
@@ -180,7 +183,7 @@ class CrossBoard {
                         const capturableIndex = this.points[pointIndex].capturableIndex[j];
 
                         // draw capture point
-                        if (capturableIndex !== null) {
+                        if (capturableIndex !== undefined) {
                             this.p5.stroke(180, 200, 100);
                             this.p5.strokeWeight(15);
                             this.p5.line(
@@ -217,7 +220,7 @@ class Pawn {
     board: CrossBoard;
     owner: Gamer;
     pointIndex: number;
-    nextPoint: number | null;
+    nextPoint: number | undefined;
 
     id: number;
     pos: P5.Vector;
@@ -233,7 +236,7 @@ class Pawn {
         this.board = config.board;
         this.owner = config.owner;
         this.pointIndex = config.pointIndex;
-        this.nextPoint = null;
+        this.nextPoint = undefined;
         this.pos = p5.createVector();
         this.radius = config.radius;
         this.color = config.owner === Gamer.AI ? p5.color(20, 200, 120) : p5.color(200, 100, 70);
@@ -278,46 +281,69 @@ class Pawn {
         if (this.owner === Gamer.PLAYER && this.mode === 'drag' && !this.p5.mouseIsPressed) {
             this.board.mode = this.mode = 'animation';
             const mousePos = this.p5.createVector(this.p5.mouseX, this.p5.mouseY);
-            // calculate the permissible cells
 
-            let movablePoints: number[] = [];
+            // calculate the permissible cells
+            let movablePoints: [number | undefined, number | undefined][] = [];
             for (let i = 0; i < this.board.points[this.pointIndex].neighbourIndex.length; i++) {
                 const neighbourIndex = this.board.points[this.pointIndex].neighbourIndex[i];
                 const capturableIndex = this.board.points[this.pointIndex].capturableIndex[i];
-                const neighbourPoint = this.board.points[neighbourIndex];
-                if (neighbourPoint.pawnIndex === undefined) movablePoints.push(neighbourIndex);
 
-                if (
+                const neighbourPoint = this.board.points[neighbourIndex];
+                const t1 = neighbourPoint.pawnIndex === undefined ? neighbourIndex : undefined;
+
+                const t2 =
                     neighbourPoint.pawnIndex !== undefined &&
                     this.board.pawns[neighbourPoint.pawnIndex].owner === Gamer.AI &&
-                    capturableIndex !== null &&
-                    this.board.points[capturableIndex].pawnIndex !== undefined &&
-                    this.board.pawns[this.board.points[capturableIndex].pawnIndex].owner
-                )
-                    movablePoints.push(capturableIndex);
+                    capturableIndex !== undefined &&
+                    this.board.points[capturableIndex].pawnIndex === undefined
+                        ? capturableIndex
+                        : undefined;
+
+                movablePoints.push([t1, t2]);
             }
 
             // find if pawn is near any of the permissible points
             for (let i = 0; i < movablePoints.length; i++) {
-                const index = movablePoints[i];
-                const point = this.board.points[index];
-                if (point.pawnIndex !== undefined) continue;
+                let index = movablePoints[i][0];
+                if (index !== undefined) {
+                    const point = this.board.points[index];
+                    if (i === this.pointIndex) continue;
+                    if (point.pawnIndex == undefined) {
+                        const distance = mousePos
+                            .copy()
+                            .sub(this.p5.createVector(offsetX + point.pos.x * dimension, offsetY + point.pos.y * dimension))
+                            .mag();
 
-                if (i === this.pointIndex) continue;
-                const distance = mousePos
-                    .copy()
-                    .sub(this.p5.createVector(offsetX + point.pos.x * dimension, offsetY + point.pos.y * dimension))
-                    .mag();
+                        if (distance < SNAP_RADIUS) {
+                            this.nextPoint = index;
+                            this.board.capturedIndex = undefined;
+                            continue;
+                        }
+                    }
+                }
+                index = movablePoints[i][1];
 
-                if (distance < SNAP_RADIUS) {
-                    this.nextPoint = index;
+                if (index !== undefined) {
+                    const point = this.board.points[index];
+                    if (point.pawnIndex !== undefined) continue;
+                    if (i === this.pointIndex) continue;
+
+                    const distance = mousePos
+                        .copy()
+                        .sub(this.p5.createVector(offsetX + point.pos.x * dimension, offsetY + point.pos.y * dimension))
+                        .mag();
+
+                    if (distance < SNAP_RADIUS) {
+                        this.nextPoint = index;
+                        this.board.capturedIndex = movablePoints[i][0];
+                    }
                 }
             }
         }
 
         // travel to target position
         if (this.mode === 'animation') {
-            const targetIndex = this.nextPoint !== null ? this.nextPoint : this.pointIndex;
+            const targetIndex = this.nextPoint !== undefined ? this.nextPoint : this.pointIndex;
             const currentPos = this.board.points[targetIndex].pos;
             const targetPos = this.p5.createVector(offsetX + currentPos.x * dimension, offsetY + currentPos.y * dimension);
             const distance = targetPos.copy().sub(this.pos).mag();
@@ -325,9 +351,9 @@ class Pawn {
             if (distance < SNAP_RADIUS) {
                 this.pos.set(targetPos.x, targetPos.y);
                 this.board.mode = this.mode = 'normal';
-                this.nextPoint !== null && this.board.movePawn(this.pointIndex, this.nextPoint);
+                this.nextPoint !== undefined && this.board.movePawn(this.pointIndex, this.nextPoint);
                 this.pointIndex = targetIndex;
-                this.nextPoint = null;
+                this.nextPoint = undefined;
                 return this;
             }
 
@@ -338,7 +364,6 @@ class Pawn {
     }
 
     draw() {
-        const point = this.board.points[this.pointIndex];
         this.p5.noStroke();
         this.p5.fill(this.color);
         this.p5.ellipseMode(this.p5.CENTER);
@@ -367,6 +392,7 @@ function buildPawns(p5: P5, board: CrossBoard) {
         new Pawn(p5, { board, radius, owner: Gamer.AI, pointIndex: 2, showHelpers: board.showHelpers }),
         new Pawn(p5, { board, radius, owner: Gamer.AI, pointIndex: 3, showHelpers: board.showHelpers }),
         new Pawn(p5, { board, radius, owner: Gamer.AI, pointIndex: 4, showHelpers: board.showHelpers }),
+        // new Pawn(p5, { board, radius, owner: Gamer.AI, pointIndex: 6, showHelpers: board.showHelpers }),
 
         new Pawn(p5, { board, radius, owner: Gamer.PLAYER, pointIndex: 8, showHelpers: board.showHelpers }),
         new Pawn(p5, { board, radius, owner: Gamer.PLAYER, pointIndex: 9, showHelpers: board.showHelpers }),
@@ -392,7 +418,7 @@ function buildBoard(p5: P5) {
             id: 1,
             pos: p5.createVector(2, 0),
             neighbourIndex: [0, 2, 3, 4],
-            capturableIndex: [null, null, 5, 7],
+            capturableIndex: [undefined, undefined, 5, 7],
             pawnIndex: 1
         },
         {
@@ -407,36 +433,38 @@ function buildBoard(p5: P5) {
             id: 3,
             pos: p5.createVector(1, 1),
             neighbourIndex: [0, 1, 6, 5],
-            capturableIndex: [null, null, 9, null],
+            capturableIndex: [undefined, undefined, 9, undefined],
             pawnIndex: 3
         },
         {
             id: 4,
             pos: p5.createVector(3, 1),
             neighbourIndex: [1, 2, 7, 6],
-            capturableIndex: [null, null, null, 8],
+            capturableIndex: [undefined, undefined, undefined, 8],
             pawnIndex: 4
+            // pawnIndex: undefined
         },
 
         {
             id: 5,
             pos: p5.createVector(0, 2),
             neighbourIndex: [0, 3, 6, 8, 10],
-            capturableIndex: [null, 1, 7, 11, null],
+            capturableIndex: [undefined, 1, 7, 11, undefined],
             pawnIndex: undefined
         },
         {
             id: 6,
             pos: p5.createVector(2, 2),
             neighbourIndex: [3, 1, 4, 7, 9, 11, 8, 5],
-            capturableIndex: [0, null, 2, null, 12, null, 10, null],
+            capturableIndex: [0, undefined, 2, undefined, 12, undefined, 10, undefined],
             pawnIndex: undefined
+            // pawnIndex: 4
         },
         {
             id: 7,
             pos: p5.createVector(4, 2),
             neighbourIndex: [4, 2, 12, 9, 6],
-            capturableIndex: [1, null, null, 11, 5],
+            capturableIndex: [1, undefined, undefined, 11, 5],
             pawnIndex: undefined
         },
 
@@ -444,14 +472,14 @@ function buildBoard(p5: P5) {
             id: 8,
             pos: p5.createVector(1, 3),
             neighbourIndex: [5, 6, 11, 10],
-            capturableIndex: [null, 4, null, null],
+            capturableIndex: [undefined, 4, undefined, undefined],
             pawnIndex: 5
         },
         {
             id: 9,
             pos: p5.createVector(3, 3),
             neighbourIndex: [6, 7, 12, 11],
-            capturableIndex: [3, null, null, null],
+            capturableIndex: [3, undefined, undefined, undefined],
             pawnIndex: 6
         },
 
@@ -466,7 +494,7 @@ function buildBoard(p5: P5) {
             id: 11,
             pos: p5.createVector(2, 4),
             neighbourIndex: [8, 6, 9, 12, 10],
-            capturableIndex: [5, 1, 7, null, null],
+            capturableIndex: [5, 1, 7, undefined, undefined],
             pawnIndex: 8
         },
         {
