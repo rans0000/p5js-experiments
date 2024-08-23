@@ -107,6 +107,16 @@ class CrossBoard {
         this.points[end].pawnIndex = temp;
     }
 
+    removePawn(pointIndex: number) {
+        const index = this.pawns.findIndex((pawn) => pawn.pointIndex === pointIndex);
+        if (index != -1) {
+            const pawns = [...this.pawns];
+            pawns.splice(index, 1);
+            this.pawns = pawns;
+            this.capturedIndex = undefined;
+        }
+    }
+
     update(deltaTime: number): this {
         const dimension = this.size / 5;
         const length = this.points.length;
@@ -307,7 +317,7 @@ class Pawn {
                 let index = movablePoints[i][0];
                 if (index !== undefined) {
                     const point = this.board.points[index];
-                    if (i === this.pointIndex) continue;
+                    if (index === this.pointIndex) continue;
                     if (point.pawnIndex == undefined) {
                         const distance = mousePos
                             .copy()
@@ -352,6 +362,9 @@ class Pawn {
                 this.pos.set(targetPos.x, targetPos.y);
                 this.board.mode = this.mode = 'normal';
                 this.nextPoint !== undefined && this.board.movePawn(this.pointIndex, this.nextPoint);
+                if (this.board.capturedIndex !== undefined) {
+                    this.board.removePawn(this.board.capturedIndex);
+                }
                 this.pointIndex = targetIndex;
                 this.nextPoint = undefined;
                 return this;
