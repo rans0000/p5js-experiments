@@ -5,6 +5,7 @@ type Keys = 'size' | 'showHelpers';
 const SNAP_RADIUS = 40;
 const DEBUG = false;
 const CELL_RADIUS = 50;
+const MAX_DEPTH = 10;
 let pawnIdCounter = -1;
 
 type TPawn = {
@@ -38,8 +39,8 @@ type TCrossBoardConfig = Pick<TCrossBoard, 'size' | 'showHelpers' | 'currentPlay
 type TCell = {
     id: number;
     pos: P5.Vector;
-    neighbourIndex: number[];
-    capturableIndex: (number | undefined)[];
+    neighbourIndices: number[];
+    capturableIndices: (number | undefined)[];
     pawnIndex: number | undefined;
 };
 
@@ -117,10 +118,73 @@ class CrossBoard {
         }
     }
 
+    checkGameStatus(board: CrossBoard): number {
+        let playerScore = 0;
+        let aiScore = 0;
+        for (const pawn of board.pawns) {
+            pawn.owner === Gamer.AI ? ++aiScore : playerScore;
+        }
+        return aiScore - playerScore;
+    }
+
+    calculateBestMove(): [number, number] {
+        let bestScore = -Infinity;
+        // let depth = MAX_DEPTH;
+        let depth = 1;
+        let move = -1;
+        let alpha = -Infinity;
+        let beta = Infinity;
+
+        for (let i = 0; i < this.pawns.length; i++) {
+            const currentPawn = this.pawns[i];
+            if (currentPawn.owner === Gamer.PLAYER) continue;
+            //setup
+            const score = this.minimax(this, MAX_DEPTH, true, 0, 0);
+            // cleanup
+            if (score > bestScore) {
+                bestScore = score;
+                move = i;
+            }
+        }
+
+        return [0, 1];
+    }
+
+    minimax(board: CrossBoard, depth: number, isMaximizing: boolean, alpha: number, beta: number): number {
+        const game = this.checkGameStatus(board);
+        if (depth <= 0 || board.pawns.length === 1) return game;
+
+        if (isMaximizing) {
+            let bestScore = -Infinity;
+            for (let i = 0; i < board.pawns.length; i++) {
+                const currentPawn = board.pawns[i];
+                const currentPoint = board.points[currentPawn.pointIndex];
+
+                if (currentPawn.owner === Gamer.PLAYER) continue;
+
+                // check capturables
+                for (let i = 0; i < currentPoint.capturableIndices.length; i++) {
+                    if (currentPoint.capturableIndices[i] === undefined) {
+                        // @todo: minimax
+                    }
+                }
+            }
+            return bestScore;
+        } else {
+            let bestScore = Infinity;
+            for (let i = 0; i < board.pawns.length; i++) {}
+            return bestScore;
+        }
+    }
+
     update(deltaTime: number): this {
         const dimension = this.size / 5;
         const length = this.points.length;
         const { x: offsetX, y: offsetY } = this.offset;
+
+        if (this.currentPlayer === Gamer.AI && this.mode === 'normal') {
+            this.calculateBestMove();
+        }
 
         for (let i = 0; i < this.pawns.length; i++) {
             this.pawns[i].update(deltaTime, offsetX, offsetY, dimension);
@@ -139,7 +203,7 @@ class CrossBoard {
             const currentPoint = this.p5.createVector(offsetX + x1 * dimension, offsetY + y1 * dimension);
 
             // draw lines to neighbours
-            this.points[i].neighbourIndex.forEach((neighbour) => {
+            this.points[i].neighbourIndices.forEach((neighbour) => {
                 const { x: x2, y: y2 } = this.points[neighbour].pos;
                 this.p5.strokeWeight(2);
                 this.p5.stroke(255, 0.1);
@@ -188,9 +252,9 @@ class CrossBoard {
                 if (distance > CELL_RADIUS) continue;
 
                 if (DEBUG) {
-                    for (let j = 0; j < this.points[pointIndex].neighbourIndex.length; j++) {
-                        const neighbourIndex = this.points[pointIndex].neighbourIndex[j];
-                        const capturableIndex = this.points[pointIndex].capturableIndex[j];
+                    for (let j = 0; j < this.points[pointIndex].neighbourIndices.length; j++) {
+                        const neighbourIndex = this.points[pointIndex].neighbourIndices[j];
+                        const capturableIndex = this.points[pointIndex].capturableIndices[j];
 
                         // draw capture point
                         if (capturableIndex !== undefined) {
@@ -294,9 +358,9 @@ class Pawn {
 
             // calculate the permissible cells
             let movablePoints: [number | undefined, number | undefined][] = [];
-            for (let i = 0; i < this.board.points[this.pointIndex].neighbourIndex.length; i++) {
-                const neighbourIndex = this.board.points[this.pointIndex].neighbourIndex[i];
-                const capturableIndex = this.board.points[this.pointIndex].capturableIndex[i];
+            for (let i = 0; i < this.board.points[this.pointIndex].neighbourIndices.length; i++) {
+                const neighbourIndex = this.board.points[this.pointIndex].neighbourIndices[i];
+                const capturableIndex = this.board.points[this.pointIndex].capturableIndices[i];
 
                 const neighbourPoint = this.board.points[neighbourIndex];
                 const t1 = neighbourPoint.pawnIndex === undefined ? neighbourIndex : undefined;
@@ -423,37 +487,37 @@ function buildBoard(p5: P5) {
         {
             id: 0,
             pos: p5.createVector(0, 0),
-            neighbourIndex: [1, 3, 5],
-            capturableIndex: [2, 6, 10],
+            neighbourIndices: [1, 3, 5],
+            capturableIndices: [2, 6, 10],
             pawnIndex: 0
         },
         {
             id: 1,
             pos: p5.createVector(2, 0),
-            neighbourIndex: [0, 2, 3, 4],
-            capturableIndex: [undefined, undefined, 5, 7],
+            neighbourIndices: [0, 2, 3, 4],
+            capturableIndices: [undefined, undefined, 5, 7],
             pawnIndex: 1
         },
         {
             id: 2,
             pos: p5.createVector(4, 0),
-            neighbourIndex: [1, 4, 7],
-            capturableIndex: [0, 6, 12],
+            neighbourIndices: [1, 4, 7],
+            capturableIndices: [0, 6, 12],
             pawnIndex: 2
         },
 
         {
             id: 3,
             pos: p5.createVector(1, 1),
-            neighbourIndex: [0, 1, 6, 5],
-            capturableIndex: [undefined, undefined, 9, undefined],
+            neighbourIndices: [0, 1, 6, 5],
+            capturableIndices: [undefined, undefined, 9, undefined],
             pawnIndex: 3
         },
         {
             id: 4,
             pos: p5.createVector(3, 1),
-            neighbourIndex: [1, 2, 7, 6],
-            capturableIndex: [undefined, undefined, undefined, 8],
+            neighbourIndices: [1, 2, 7, 6],
+            capturableIndices: [undefined, undefined, undefined, 8],
             pawnIndex: 4
             // pawnIndex: undefined
         },
@@ -461,60 +525,60 @@ function buildBoard(p5: P5) {
         {
             id: 5,
             pos: p5.createVector(0, 2),
-            neighbourIndex: [0, 3, 6, 8, 10],
-            capturableIndex: [undefined, 1, 7, 11, undefined],
+            neighbourIndices: [0, 3, 6, 8, 10],
+            capturableIndices: [undefined, 1, 7, 11, undefined],
             pawnIndex: undefined
         },
         {
             id: 6,
             pos: p5.createVector(2, 2),
-            neighbourIndex: [3, 1, 4, 7, 9, 11, 8, 5],
-            capturableIndex: [0, undefined, 2, undefined, 12, undefined, 10, undefined],
+            neighbourIndices: [3, 1, 4, 7, 9, 11, 8, 5],
+            capturableIndices: [0, undefined, 2, undefined, 12, undefined, 10, undefined],
             pawnIndex: undefined
             // pawnIndex: 4
         },
         {
             id: 7,
             pos: p5.createVector(4, 2),
-            neighbourIndex: [4, 2, 12, 9, 6],
-            capturableIndex: [1, undefined, undefined, 11, 5],
+            neighbourIndices: [4, 2, 12, 9, 6],
+            capturableIndices: [1, undefined, undefined, 11, 5],
             pawnIndex: undefined
         },
 
         {
             id: 8,
             pos: p5.createVector(1, 3),
-            neighbourIndex: [5, 6, 11, 10],
-            capturableIndex: [undefined, 4, undefined, undefined],
+            neighbourIndices: [5, 6, 11, 10],
+            capturableIndices: [undefined, 4, undefined, undefined],
             pawnIndex: 5
         },
         {
             id: 9,
             pos: p5.createVector(3, 3),
-            neighbourIndex: [6, 7, 12, 11],
-            capturableIndex: [3, undefined, undefined, undefined],
+            neighbourIndices: [6, 7, 12, 11],
+            capturableIndices: [3, undefined, undefined, undefined],
             pawnIndex: 6
         },
 
         {
             id: 10,
             pos: p5.createVector(0, 4),
-            neighbourIndex: [5, 8, 11],
-            capturableIndex: [0, 6, 12],
+            neighbourIndices: [5, 8, 11],
+            capturableIndices: [0, 6, 12],
             pawnIndex: 7
         },
         {
             id: 11,
             pos: p5.createVector(2, 4),
-            neighbourIndex: [8, 6, 9, 12, 10],
-            capturableIndex: [5, 1, 7, undefined, undefined],
+            neighbourIndices: [8, 6, 9, 12, 10],
+            capturableIndices: [5, 1, 7, undefined, undefined],
             pawnIndex: 8
         },
         {
             id: 12,
             pos: p5.createVector(4, 4),
-            neighbourIndex: [9, 7, 11],
-            capturableIndex: [6, 2, 10],
+            neighbourIndices: [9, 7, 11],
+            capturableIndices: [6, 2, 10],
             pawnIndex: 9
         }
     ];
@@ -525,5 +589,8 @@ function buildBoard(p5: P5) {
 
     return points;
 }
+
+// --------------------------------------------------------
+// --------------------------------------------------------
 
 export default CrossBoard;
