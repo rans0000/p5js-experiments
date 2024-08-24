@@ -1,5 +1,6 @@
-import p5 from 'p5';
+import P5 from 'p5';
 import { TEdges } from './types';
+import CrossBoard from 'src/libs/cross-board-2';
 
 export const defaultEntityConfig = { r: 5 };
 export const defaultEdgeConfig: TEdges = {
@@ -18,7 +19,7 @@ export enum Gamer {
     AI
 }
 export type TTicTacToeCell = {
-    pos: p5.Vector;
+    pos: P5.Vector;
     owner: Gamer | undefined;
 };
 export type TGameStatus = {
