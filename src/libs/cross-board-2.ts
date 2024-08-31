@@ -5,7 +5,9 @@ import { Gamer } from 'src/utils/utils';
 const OFFSET = new P5.Vector(150, 150);
 const CELL_RADIUS = 50;
 const DIMENSION = 100;
-const MAX_DEPTH = 1;
+const MAX_DEPTH = 5;
+let count = 0;
+const ENABLE_PRUNING = true;
 // --------------------------------------------------------
 
 export type TCrossBoard = {
@@ -19,9 +21,7 @@ export type TCrossBoardCell = {
     id: number;
     pos: P5.Vector;
     connectingIndices: [number, number | undefined][];
-    // neighbourIndices: number[];
-    // capturableIndices: (number | undefined)[];
-    pawnIndex: number | undefined;
+    pawn: null | Pawn;
 };
 
 export type TCrossBoardPawn = {
@@ -37,9 +37,10 @@ export type TCrossBoardPawn = {
 type TCrossBoardPawnConfig = Pick<TCrossBoardPawn, 'id' | 'board' | 'owner' | 'cellIndex'>;
 
 type TBestMove = {
-    pawnIndex: number;
+    pawnId: number;
     targetCellIndex: number;
     capturedCellIndex?: number;
+    bestScore: number;
 } | null;
 
 // --------------------------------------------------------
@@ -55,117 +56,117 @@ class CrossBoard {
     constructor(p5: P5, config: TCrossBoardConfig) {
         this.p5 = p5;
         this.currentPlayer = config.currentPlayer;
-        this.cells = buildBoard(p5);
         this.pawns = buildPawns(p5, this);
+        this.cells = buildBoard(p5, this.pawns);
     }
 
     checkScore(board: CrossBoard, player: Gamer): number {
         let score = 0;
         for (const pawn of board.pawns) {
-            score += pawn.owner === player ? 1 : -1;
+            score += pawn.owner === player ? -1 : 1;
         }
         return score;
     }
 
     nextMove(board: CrossBoard) {
+        count = 0;
         const currentPlayer = this.currentPlayer;
+        const nextPlayer = currentPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
         let bestScore = -Infinity;
         let bestMove: TBestMove = null;
+        let alpha = -Infinity;
+        let beta = Infinity;
 
         console.log('player: ', currentPlayer);
         // search through the available pawns
         for (const pawn of board.pawns) {
             if (pawn.owner !== currentPlayer) continue;
+            console.log('\nPawn ', pawn.id);
             const currentCell = board.cells[pawn.cellIndex];
 
             // find neighbour cell
             for (const connector of currentCell.connectingIndices) {
                 const neighbourCellIndex = connector[0];
                 const capturableCellIndex = connector[1];
-                const neighbourPawnIndex = board.cells[neighbourCellIndex].pawnIndex;
+                const neighbourPawn = board.cells[neighbourCellIndex].pawn;
 
                 // check for capturable cells
                 if (
                     capturableCellIndex !== undefined &&
-                    board.cells[capturableCellIndex].pawnIndex === undefined &&
-                    neighbourPawnIndex !== undefined &&
-                    board.pawns[neighbourPawnIndex].owner !== currentPlayer
+                    !board.cells[capturableCellIndex].pawn &&
+                    neighbourPawn &&
+                    neighbourPawn.owner !== currentPlayer
                 ) {
                     // pre-calc
-                    const currentCellIndex = pawn.cellIndex;
-                    const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                    const stashCellIndex = pawn.cellIndex;
                     pawn.cellIndex = capturableCellIndex;
-                    board.cells[capturableCellIndex].pawnIndex = currentPawnIndex;
-                    board.cells[currentCellIndex].pawnIndex = undefined;
-                    const tempPawn = board.pawns.splice(neighbourPawnIndex, 1);
-                    board.cells[neighbourCellIndex].pawnIndex = undefined;
-
-                    // errr
-                    if (pawn.id == 9 && currentCellIndex == 12 && capturableCellIndex == 2) {
-                        //
-                        // debugger;
+                    board.cells[capturableCellIndex].pawn = pawn;
+                    board.cells[stashCellIndex].pawn = null;
+                    // delete captured pawn
+                    const capturedPawn = neighbourPawn;
+                    const index = board.pawns.findIndex((p) => p.id === capturedPawn.id);
+                    if (index > -1) {
+                        board.cells[neighbourCellIndex].pawn = null;
+                        board.pawns.splice(index, 1);
                     }
 
                     // depth
                     const score = this.minimax(
                         board,
                         MAX_DEPTH,
-                        true,
+                        false,
                         currentPlayer,
-                        `cap-x pawn(${pawn.id}) ${currentCellIndex}-${capturableCellIndex}`
+                        alpha,
+                        beta,
+                        `cap// pawn(${pawn.id}) ${stashCellIndex}-${capturableCellIndex}`
                     );
+
                     if (score > bestScore) {
                         bestScore = score;
                         bestMove = {
-                            pawnIndex: pawn.id,
+                            pawnId: pawn.id,
                             targetCellIndex: capturableCellIndex,
-                            capturedCellIndex: neighbourCellIndex
+                            capturedCellIndex: neighbourCellIndex,
+                            bestScore
                         };
                     }
 
-                    // errr
-                    if (pawn.id === 9 && currentCellIndex === 12 && capturableCellIndex === 2) {
-                        //
-                        // debugger;
-                    }
-
                     // undo minimax changes
-                    board.pawns.splice(neighbourPawnIndex, 0, ...tempPawn);
-                    pawn.cellIndex = currentCellIndex;
-                    board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
-                    board.cells[neighbourCellIndex].pawnIndex = neighbourPawnIndex;
+                    board.pawns.splice(index, 0, capturedPawn);
+                    board.cells[capturedPawn.cellIndex].pawn = capturedPawn;
+                    pawn.cellIndex = stashCellIndex;
+                    board.cells[stashCellIndex].pawn = pawn;
+                    board.cells[neighbourCellIndex].pawn = capturedPawn;
+                    board.cells[capturableCellIndex].pawn = null;
                 }
 
                 // check for neighbour cells
-                else if (neighbourPawnIndex === undefined) {
-                    // for initializing
-                    if (!bestMove) {
-                        bestMove = { pawnIndex: pawn.id, targetCellIndex: neighbourCellIndex };
-                    }
-
+                else if (!neighbourPawn) {
                     // pre-calc
-                    const currentCellIndex = pawn.cellIndex;
-                    const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                    const stashCellIndex = pawn.cellIndex;
                     pawn.cellIndex = neighbourCellIndex;
-                    board.cells[neighbourCellIndex].pawnIndex = currentPawnIndex;
-                    board.cells[currentCellIndex].pawnIndex = undefined;
+                    board.cells[neighbourCellIndex].pawn = pawn;
+                    board.cells[stashCellIndex].pawn = null;
 
                     // depth
                     const score = this.minimax(
                         board,
                         MAX_DEPTH,
-                        true,
+                        false,
                         currentPlayer,
-                        `mov-x pawn(${pawn.id}) ${currentCellIndex}-${neighbourCellIndex}`
+                        alpha,
+                        beta,
+                        `mov// pawn(${pawn.id}) ${stashCellIndex}-${neighbourCellIndex}`
                     );
+
                     if (score > bestScore) {
                         bestScore = score;
-                        bestMove = { pawnIndex: pawn.id, targetCellIndex: neighbourCellIndex };
+                        bestMove = { pawnId: pawn.id, targetCellIndex: neighbourCellIndex, bestScore };
                     }
                     // undo minimax changes
-                    pawn.cellIndex = currentCellIndex;
-                    board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
-                    board.cells[neighbourCellIndex].pawnIndex = undefined;
+                    pawn.cellIndex = stashCellIndex;
+                    board.cells[stashCellIndex].pawn = pawn;
+                    board.cells[neighbourCellIndex].pawn = null;
                 }
             }
         }
@@ -173,27 +174,26 @@ class CrossBoard {
         // initiate board move
         if (bestMove) {
             this.movePawn(board, bestMove);
-            board.currentPlayer = board.currentPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
-        }
-        // toggle player
-    }
-
-    validate(board: CrossBoard, status: string, depth: number) {
-        for (let i = 0; i < this.pawns.length; i++) {
-            const pawn = board.pawns[i];
-            const t = board.cells[pawn.cellIndex].pawnIndex;
-            // if (board.cells[pawn.cellIndex].pawnIndex !== pawn.cellIndex) {
-            //     console.log(status, board);
-            //     throw `error ${i} ${board.cells[pawn.cellIndex].pawnIndex}`;
-            // }
+            // toggle player
+            board.currentPlayer = nextPlayer;
         }
     }
 
-    minimax(board: CrossBoard, depth: number, isMaximizing: boolean, currentPlayer: Gamer, status: string): number {
-        this.validate(board, status, depth);
-        const score = this.checkScore(board, currentPlayer);
+    minimax(
+        board: CrossBoard,
+        depth: number,
+        isMaximizing: boolean,
+        lastPlayer: Gamer,
+        alpha: number,
+        beta: number,
+        status: string
+    ): number {
+        ++count;
+        const score = this.checkScore(board, lastPlayer);
+        console.log(' '.padStart((MAX_DEPTH - depth) * 3, ' '), status, '--', score, `${depth}D`, count);
 
-        const nextPlayer = currentPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
+        const currentPlayer = lastPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
+        // if (depth <= 0 || count > 100) return score;
         if (depth <= 0) return score;
 
         if (isMaximizing) {
@@ -207,79 +207,85 @@ class CrossBoard {
                 for (const connector of currentCell.connectingIndices) {
                     const neighbourCellIndex = connector[0];
                     const capturableCellIndex = connector[1];
-                    const neighbourPawnIndex = board.cells[neighbourCellIndex].pawnIndex;
+                    const neighbourPawn = board.cells[neighbourCellIndex].pawn;
 
                     // check for capturable cells
                     if (
                         capturableCellIndex !== undefined &&
-                        board.cells[capturableCellIndex].pawnIndex === undefined &&
-                        neighbourPawnIndex !== undefined &&
-                        board.pawns[neighbourPawnIndex].owner !== currentPlayer
+                        !board.cells[capturableCellIndex].pawn &&
+                        neighbourPawn &&
+                        neighbourPawn.owner !== currentPlayer
                     ) {
                         // pre-calc
-                        const currentCellIndex = pawn.cellIndex;
-                        const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                        const stashCellIndex = pawn.cellIndex;
                         pawn.cellIndex = capturableCellIndex;
-                        board.cells[capturableCellIndex].pawnIndex = currentPawnIndex;
-                        board.cells[currentCellIndex].pawnIndex = undefined;
-                        const tempPawn = board.pawns.splice(neighbourPawnIndex, 1);
-                        board.cells[neighbourCellIndex].pawnIndex = undefined;
-
-                        // errr
-                        if (pawn.id == 9 && currentCellIndex == 12 && capturableCellIndex == 2) {
-                            //
-                            // debugger;
+                        board.cells[capturableCellIndex].pawn = pawn;
+                        board.cells[stashCellIndex].pawn = null;
+                        // delete captured pawn
+                        const capturedPawn = neighbourPawn;
+                        const index = board.pawns.findIndex((p) => p.id === capturedPawn.id);
+                        if (index > -1) {
+                            board.cells[neighbourCellIndex].pawn = null;
+                            board.pawns.splice(index, 1);
                         }
 
                         // depth
                         const score = this.minimax(
                             board,
-                            MAX_DEPTH - 1,
+                            depth - 1,
                             false,
-                            nextPlayer,
-                            `cap pawn(${pawn.id}) ${currentCellIndex}-${capturableCellIndex}`
+                            currentPlayer,
+                            alpha,
+                            beta,
+                            `cap++ pawn(${pawn.id}) ${stashCellIndex}-${capturableCellIndex}`
                         );
-                        if (score > bestScore) {
-                            bestScore = score;
-                        }
-
-                        // errr
-                        if (pawn.id === 9 && currentCellIndex === 12 && capturableCellIndex === 2) {
-                            //
-                            // debugger;
-                        }
+                        bestScore = Math.max(score, bestScore);
 
                         // undo minimax changes
-                        board.pawns.splice(neighbourPawnIndex, 0, ...tempPawn);
-                        pawn.cellIndex = currentCellIndex;
-                        board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
-                        board.cells[neighbourCellIndex].pawnIndex = neighbourPawnIndex;
+                        board.pawns.splice(index, 0, capturedPawn);
+                        board.cells[capturedPawn.cellIndex].pawn = capturedPawn;
+                        pawn.cellIndex = stashCellIndex;
+                        board.cells[stashCellIndex].pawn = pawn;
+                        board.cells[neighbourCellIndex].pawn = capturedPawn;
+                        board.cells[capturableCellIndex].pawn = null;
+
+                        // alpha-beta
+                        if (ENABLE_PRUNING) {
+                            alpha = Math.max(alpha, score);
+                            if (beta <= alpha) break;
+                        }
                     }
 
                     // check for neighbour cells
-                    else if (neighbourPawnIndex === undefined) {
+                    else if (!neighbourPawn) {
                         // pre-calc
-                        const currentCellIndex = pawn.cellIndex;
-                        const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                        const stashCellIndex = pawn.cellIndex;
                         pawn.cellIndex = neighbourCellIndex;
-                        board.cells[neighbourCellIndex].pawnIndex = currentPawnIndex;
-                        board.cells[currentCellIndex].pawnIndex = undefined;
+                        board.cells[neighbourCellIndex].pawn = pawn;
+                        board.cells[stashCellIndex].pawn = null;
 
                         // depth
                         const score = this.minimax(
                             board,
-                            MAX_DEPTH - 1,
+                            depth - 1,
                             false,
-                            nextPlayer,
-                            `mov pawn(${pawn.id}) ${currentCellIndex}-${neighbourCellIndex}`
+                            currentPlayer,
+                            alpha,
+                            beta,
+                            `mov++ pawn(${pawn.id}) ${stashCellIndex}-${neighbourCellIndex}`
                         );
-                        if (score > bestScore) {
-                            bestScore = score;
-                        }
+                        bestScore = Math.max(score, bestScore);
+
                         // undo minimax changes
-                        pawn.cellIndex = currentCellIndex;
-                        board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
-                        board.cells[neighbourCellIndex].pawnIndex = undefined;
+                        pawn.cellIndex = stashCellIndex;
+                        board.cells[stashCellIndex].pawn = pawn;
+                        board.cells[neighbourCellIndex].pawn = null;
+
+                        // alpha-beta
+                        if (ENABLE_PRUNING) {
+                            alpha = Math.max(alpha, score);
+                            if (beta <= alpha) break;
+                        }
                     }
                 }
             }
@@ -296,81 +302,85 @@ class CrossBoard {
                 for (const connector of currentCell.connectingIndices) {
                     const neighbourCellIndex = connector[0];
                     const capturableCellIndex = connector[1];
-                    const neighbourPawnIndex = board.cells[neighbourCellIndex].pawnIndex;
+                    const neighbourPawn = board.cells[neighbourCellIndex].pawn;
 
                     // check for capturable cells
                     if (
                         capturableCellIndex !== undefined &&
-                        board.cells[capturableCellIndex].pawnIndex === undefined &&
-                        neighbourPawnIndex !== undefined &&
-                        board.pawns[neighbourPawnIndex].owner !== currentPlayer
+                        !board.cells[capturableCellIndex].pawn &&
+                        neighbourPawn &&
+                        neighbourPawn.owner !== currentPlayer
                     ) {
                         // pre-calc
-                        const currentCellIndex = pawn.cellIndex;
-                        const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                        const stashCellIndex = pawn.cellIndex;
                         pawn.cellIndex = capturableCellIndex;
-                        board.cells[capturableCellIndex].pawnIndex = currentPawnIndex;
-                        board.cells[currentCellIndex].pawnIndex = undefined;
-                        const tempPawn = board.pawns.splice(neighbourPawnIndex, 1);
-                        board.cells[neighbourCellIndex].pawnIndex = undefined;
-
-                        // errr
-                        if (pawn.id == 9 && currentCellIndex == 12 && capturableCellIndex == 2) {
-                            //
-                            // debugger;
+                        board.cells[capturableCellIndex].pawn = pawn;
+                        board.cells[stashCellIndex].pawn = null;
+                        // delete captured pawn
+                        const capturedPawn = neighbourPawn;
+                        const index = board.pawns.findIndex((p) => p.id === capturedPawn.id);
+                        if (index > -1) {
+                            board.cells[neighbourCellIndex].pawn = null;
+                            board.pawns.splice(index, 1);
                         }
 
                         // depth
                         const score = this.minimax(
                             board,
-                            MAX_DEPTH - 1,
+                            depth - 1,
                             true,
-                            nextPlayer,
-                            `cap pawn(${pawn.id}) ${currentCellIndex}-${capturableCellIndex}`
+                            currentPlayer,
+                            alpha,
+                            beta,
+                            `cap-- pawn(${pawn.id}) ${stashCellIndex}-${capturableCellIndex}`
                         );
-                        if (score > bestScore) {
-                            bestScore = score;
-                        }
-
-                        // errr
-                        if (pawn.id === 9 && currentCellIndex === 12 && capturableCellIndex === 2) {
-                            //
-                            // debugger;
-                        }
+                        bestScore = Math.min(score, bestScore);
 
                         // undo minimax changes
-                        board.pawns.splice(neighbourPawnIndex, 0, ...tempPawn);
-                        pawn.cellIndex = currentCellIndex;
-                        board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
-                        board.cells[neighbourCellIndex].pawnIndex = neighbourPawnIndex;
+                        board.pawns.splice(index, 0, capturedPawn);
+                        board.cells[capturedPawn.cellIndex].pawn = capturedPawn;
+                        pawn.cellIndex = stashCellIndex;
+                        board.cells[stashCellIndex].pawn = pawn;
+                        board.cells[neighbourCellIndex].pawn = capturedPawn;
+                        board.cells[capturableCellIndex].pawn = null;
+
+                        // alpha-beta
+                        if (ENABLE_PRUNING) {
+                            beta = Math.min(beta, score);
+                            if (beta <= alpha) break;
+                        }
                     }
 
                     // check for neighbour cells
-                    else if (neighbourPawnIndex === undefined) {
-                        // for initializing
-
+                    else if (!neighbourPawn) {
                         // pre-calc
-                        const currentCellIndex = pawn.cellIndex;
-                        const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                        const stashCellIndex = pawn.cellIndex;
                         pawn.cellIndex = neighbourCellIndex;
-                        board.cells[neighbourCellIndex].pawnIndex = currentPawnIndex;
-                        board.cells[currentCellIndex].pawnIndex = undefined;
+                        board.cells[neighbourCellIndex].pawn = pawn;
+                        board.cells[stashCellIndex].pawn = null;
 
                         // depth
                         const score = this.minimax(
                             board,
-                            MAX_DEPTH - 1,
+                            depth - 1,
                             true,
-                            nextPlayer,
-                            `mov-x pawn(${pawn.id}) ${currentCellIndex}-${neighbourCellIndex}`
+                            currentPlayer,
+                            alpha,
+                            beta,
+                            `mov-- pawn(${pawn.id}) ${stashCellIndex}-${neighbourCellIndex}`
                         );
-                        if (score > bestScore) {
-                            bestScore = score;
-                        }
+                        bestScore = Math.min(score, bestScore);
+
                         // undo minimax changes
-                        pawn.cellIndex = currentCellIndex;
-                        board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
-                        board.cells[neighbourCellIndex].pawnIndex = undefined;
+                        pawn.cellIndex = stashCellIndex;
+                        board.cells[stashCellIndex].pawn = pawn;
+                        board.cells[neighbourCellIndex].pawn = null;
+
+                        // alpha-beta
+                        if (ENABLE_PRUNING) {
+                            beta = Math.min(beta, score);
+                            if (beta <= alpha) break;
+                        }
                     }
                 }
             }
@@ -381,19 +391,21 @@ class CrossBoard {
 
     movePawn(board: CrossBoard, bestMove: TBestMove): CrossBoard {
         if (!bestMove) return board;
+        const { pawnId, targetCellIndex, capturedCellIndex } = bestMove;
+        const pawn = board.pawns.find((p) => p.id === pawnId);
+        if (pawn !== undefined) {
+            const tempCell = pawn.cellIndex;
+            pawn.cellIndex = targetCellIndex;
+            board.cells[targetCellIndex].pawn = pawn;
+            board.cells[tempCell].pawn = null;
 
-        const { pawnIndex, targetCellIndex, capturedCellIndex } = bestMove;
-        const currCellIndex = board.pawns[pawnIndex].cellIndex;
-        board.pawns[pawnIndex].cellIndex = targetCellIndex;
-        board.cells[currCellIndex].pawnIndex = undefined;
-        board.cells[targetCellIndex].pawnIndex = pawnIndex;
-        if (capturedCellIndex !== undefined) {
-            // delete pawn
-            const capturedPawnIndex = board.cells[capturedCellIndex].pawnIndex;
-            if (capturedPawnIndex !== undefined) {
-                board.pawns.splice(capturedPawnIndex, 1);
-                board.cells[capturedCellIndex].pawnIndex = undefined;
-                console.log('xxxxx ', capturedCellIndex);
+            if (capturedCellIndex !== undefined) {
+                const capturedPawn = board.pawns[capturedCellIndex];
+                const index = board.pawns.findIndex((p) => p.id === capturedPawn.id);
+                if (index > -1) {
+                    board.pawns.splice(index, 1);
+                    board.cells[capturedCellIndex].pawn = null;
+                }
             }
         }
         return board;
@@ -430,7 +442,11 @@ class CrossBoard {
                 this.p5.stroke(255);
                 this.p5.strokeWeight(1);
                 this.p5.noFill();
-                this.p5.text(`${this.cells[i].id}`, posX + 25, posY - 5);
+                this.p5.text(
+                    `${this.cells[i].id}  ${this.cells[i].pawn !== null ? this.cells[i].pawn?.id : ''}`,
+                    posX + 25,
+                    posY - 5
+                );
             }
 
             // draw hover point
@@ -494,7 +510,7 @@ class Pawn {
             this.p5.strokeWeight(1);
             this.p5.noFill();
             this.p5.textAlign(this.p5.CENTER, this.p5.CENTER);
-            this.p5.text(this.id, this.pos.x, this.pos.y);
+            this.p5.text(`${this.id} (${this.cellIndex})`, this.pos.x, this.pos.y);
         }
     }
 }
@@ -508,7 +524,6 @@ function buildPawns(p5: P5, board: CrossBoard) {
         new Pawn(p5, { id: 2, board, owner: Gamer.AI, cellIndex: 2 }),
         new Pawn(p5, { id: 3, board, owner: Gamer.AI, cellIndex: 3 }),
         new Pawn(p5, { id: 4, board, owner: Gamer.AI, cellIndex: 4 }),
-        // new Pawn(p5, { board, owner: Gamer.AI, cellIndex: 6 }),
 
         new Pawn(p5, { id: 5, board, owner: Gamer.PLAYER, cellIndex: 8 }),
         new Pawn(p5, { id: 6, board, owner: Gamer.PLAYER, cellIndex: 9 }),
@@ -520,80 +535,68 @@ function buildPawns(p5: P5, board: CrossBoard) {
     return pawns;
 }
 
-export function buildBoard(p5: P5) {
+function buildBoard(p5: P5, pawns: Pawn[]) {
     // build points
     const points: TCrossBoardCell[] = [
         {
             id: 0,
             pos: p5.createVector(0, 0),
-            // neighbourIndices: [1, 3, 5],
-            // capturableIndices: [2, 6, 10],
             connectingIndices: [
                 [1, 2],
                 [3, 6],
                 [5, 10]
             ],
-            pawnIndex: 0
+            pawn: pawns[0]
         },
         {
             id: 1,
             pos: p5.createVector(2, 0),
-            // neighbourIndices: [0, 2, 3, 4],
-            // capturableIndices: [undefined, undefined, 5, 7],
             connectingIndices: [
                 [0, undefined],
                 [2, undefined],
                 [3, 5],
-                [4, 7]
+                [4, 7],
+                [6, 11]
             ],
-            pawnIndex: 1
+            pawn: pawns[1]
         },
         {
             id: 2,
             pos: p5.createVector(4, 0),
-            // neighbourIndices: [1, 4, 7],
-            // capturableIndices: [0, 6, 12],
             connectingIndices: [
                 [1, 0],
                 [4, 6],
                 [7, 12]
             ],
-            pawnIndex: 2
+            pawn: pawns[2]
         },
 
         {
             id: 3,
             pos: p5.createVector(1, 1),
-            // neighbourIndices: [0, 1, 6, 5],
-            // capturableIndices: [undefined, undefined, 9, undefined],
             connectingIndices: [
                 [0, undefined],
                 [1, undefined],
                 [6, 9],
                 [5, undefined]
             ],
-            pawnIndex: 3
+            pawn: pawns[3]
         },
         {
             id: 4,
             pos: p5.createVector(3, 1),
-            // neighbourIndices: [1, 2, 7, 6],
-            // capturableIndices: [undefined, undefined, undefined, 8],
             connectingIndices: [
                 [1, undefined],
                 [2, undefined],
                 [7, undefined],
                 [6, 8]
             ],
-            pawnIndex: 4
-            // pawnIndex: undefined
+            pawn: pawns[4]
         },
 
         {
             id: 5,
             pos: p5.createVector(0, 2),
-            // neighbourIndices: [0, 3, 6, 8, 10],
-            // capturableIndices: [undefined, 1, 7, 11, undefined],
             connectingIndices: [
                 [0, undefined],
                 [3, 1],
@@ -601,13 +604,11 @@ export function buildBoard(p5: P5) {
                 [8, 11],
                 [10, undefined]
             ],
-            pawnIndex: undefined
+            pawn: null
         },
         {
             id: 6,
             pos: p5.createVector(2, 2),
-            // neighbourIndices: [3, 1, 4, 7, 9, 11, 8, 5],
-            // capturableIndices: [0, undefined, 2, undefined, 12, undefined, 10, undefined],
             connectingIndices: [
                 [3, 0],
                 [1, undefined],
@@ -618,14 +619,11 @@ export function buildBoard(p5: P5) {
                 [8, 10],
                 [5, undefined]
             ],
-            pawnIndex: undefined
-            // pawnIndex: 4
+            pawn: null
         },
         {
             id: 7,
             pos: p5.createVector(4, 2),
-            // neighbourIndices: [4, 2, 12, 9, 6],
-            // capturableIndices: [1, undefined, undefined, 11, 5],
             connectingIndices: [
                 [4, 1],
                 [2, undefined],
@@ -633,53 +631,45 @@ export function buildBoard(p5: P5) {
                 [9, 11],
                 [6, 5]
             ],
-            pawnIndex: undefined
+            pawn: null
         },
 
         {
             id: 8,
             pos: p5.createVector(1, 3),
-            // neighbourIndices: [5, 6, 11, 10],
-            // capturableIndices: [undefined, 4, undefined, undefined],
             connectingIndices: [
                 [5, undefined],
                 [6, 4],
                 [11, undefined],
                 [10, undefined]
             ],
-            pawnIndex: 5
+            pawn: pawns[5]
         },
         {
             id: 9,
             pos: p5.createVector(3, 3),
-            // neighbourIndices: [6, 7, 12, 11],
-            // capturableIndices: [3, undefined, undefined, undefined],
             connectingIndices: [
                 [6, 3],
                 [7, undefined],
                 [12, undefined],
                 [11, undefined]
             ],
-            pawnIndex: 6
+            pawn: pawns[6]
         },
 
         {
             id: 10,
             pos: p5.createVector(0, 4),
-            // neighbourIndices: [5, 8, 11],
-            // capturableIndices: [0, 6, 12],
             connectingIndices: [
                 [5, 0],
                 [8, 6],
                 [11, 12]
             ],
-            pawnIndex: 7
+            pawn: pawns[7]
         },
         {
             id: 11,
             pos: p5.createVector(2, 4),
-            // neighbourIndices: [8, 6, 9, 12, 10],
-            // capturableIndices: [5, 1, 7, undefined, undefined],
             connectingIndices: [
                 [8, 5],
                 [6, 1],
@@ -687,19 +677,87 @@ export function buildBoard(p5: P5) {
                 [12, undefined],
                 [10, undefined]
             ],
-            pawnIndex: 8
+            pawn: pawns[8]
         },
         {
             id: 12,
             pos: p5.createVector(4, 4),
-            // neighbourIndices: [9, 7, 11],
-            // capturableIndices: [6, 2, 10],
             connectingIndices: [
                 [9, 6],
                 [7, 2],
                 [11, 10]
             ],
-            pawnIndex: 9
+            pawn: pawns[9]
+        }
+    ];
+
+    return points;
+}
+// llllllllllllllllllllllll
+function buildPawns2(p5: P5, board: CrossBoard) {
+    const pawns: Pawn[] = [
+        new Pawn(p5, { id: 0, board, owner: Gamer.PLAYER, cellIndex: 0 }),
+        new Pawn(p5, { id: 1, board, owner: Gamer.AI, cellIndex: 1 }),
+        new Pawn(p5, { id: 2, board, owner: Gamer.AI, cellIndex: 2 })
+    ];
+
+    return pawns;
+}
+
+function buildBoard2(p5: P5, pawns: Pawn[]) {
+    // build points
+    const points: TCrossBoardCell[] = [
+        {
+            id: 0,
+            pos: p5.createVector(0, 0),
+            connectingIndices: [
+                [2, 4],
+                [1, undefined],
+                [3, undefined]
+            ],
+            pawn: pawns[0]
+        },
+        {
+            id: 1,
+            pos: p5.createVector(2, 0),
+            connectingIndices: [
+                [2, 3],
+                [0, undefined],
+                [4, undefined]
+            ],
+            pawn: pawns[1]
+        },
+        {
+            id: 2,
+            pos: p5.createVector(1, 1),
+            connectingIndices: [
+                [0, undefined],
+                [1, undefined],
+                [3, undefined],
+                [4, undefined]
+            ],
+            pawn: pawns[2]
+        },
+
+        {
+            id: 3,
+            pos: p5.createVector(0, 2),
+            connectingIndices: [
+                [2, 1],
+                [0, undefined],
+                [4, undefined]
+            ],
+            pawn: null
+        },
+        {
+            id: 4,
+            pos: p5.createVector(2, 2),
+            connectingIndices: [
+                [2, 0],
+                [1, undefined],
+                [3, undefined]
+            ],
+            pawn: null
         }
     ];
 

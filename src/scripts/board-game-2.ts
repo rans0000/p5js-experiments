@@ -34,7 +34,7 @@ const sketch = (p5: P5) => {
         p5.colorMode(p5.HSB);
         window.addEventListener('resize', () => resizeDisplay(p5));
         init(p5);
-        // p5.noLoop();
+        p5.noLoop();
     };
 
     /** draw */
@@ -44,8 +44,10 @@ const sketch = (p5: P5) => {
     };
 
     p5.mouseClicked = (e: MouseEvent) => {
-        if (e.button !== MOUSE_BTN.LEFT) return false;
+        if (e.button !== MOUSE_BTN.LEFT) return;
+        p5.background(200, 60, 10);
         board.nextMove(board);
+        board.update(1).draw();
     };
 
     /**--------------------------------- */
