@@ -5,7 +5,7 @@ import { Gamer } from 'src/utils/utils';
 const OFFSET = new P5.Vector(150, 150);
 const CELL_RADIUS = 50;
 const DIMENSION = 100;
-const MAX_DEPTH = 10;
+const MAX_DEPTH = 1;
 // --------------------------------------------------------
 
 export type TCrossBoard = {
@@ -38,7 +38,8 @@ type TCrossBoardPawnConfig = Pick<TCrossBoardPawn, 'id' | 'board' | 'owner' | 'c
 
 type TBestMove = {
     pawnIndex: number;
-    targetIndex: number;
+    targetCellIndex: number;
+    capturedCellIndex?: number;
 } | null;
 
 // --------------------------------------------------------
@@ -71,10 +72,135 @@ class CrossBoard {
         let bestScore = -Infinity;
         let bestMove: TBestMove = null;
 
-        console.log('player: ', board.currentPlayer);
+        console.log('player: ', currentPlayer);
         // search through the available pawns
         for (const pawn of board.pawns) {
-            if (pawn.owner === currentPlayer) {
+            if (pawn.owner !== currentPlayer) continue;
+            const currentCell = board.cells[pawn.cellIndex];
+
+            // find neighbour cell
+            for (const connector of currentCell.connectingIndices) {
+                const neighbourCellIndex = connector[0];
+                const capturableCellIndex = connector[1];
+                const neighbourPawnIndex = board.cells[neighbourCellIndex].pawnIndex;
+
+                // check for capturable cells
+                if (
+                    capturableCellIndex !== undefined &&
+                    board.cells[capturableCellIndex].pawnIndex === undefined &&
+                    neighbourPawnIndex !== undefined &&
+                    board.pawns[neighbourPawnIndex].owner !== currentPlayer
+                ) {
+                    // pre-calc
+                    const currentCellIndex = pawn.cellIndex;
+                    const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                    pawn.cellIndex = capturableCellIndex;
+                    board.cells[capturableCellIndex].pawnIndex = currentPawnIndex;
+                    board.cells[currentCellIndex].pawnIndex = undefined;
+                    const tempPawn = board.pawns.splice(neighbourPawnIndex, 1);
+                    board.cells[neighbourCellIndex].pawnIndex = undefined;
+
+                    // errr
+                    if (pawn.id == 9 && currentCellIndex == 12 && capturableCellIndex == 2) {
+                        //
+                        // debugger;
+                    }
+
+                    // depth
+                    const score = this.minimax(
+                        board,
+                        MAX_DEPTH,
+                        true,
+                        currentPlayer,
+                        `cap-x pawn(${pawn.id}) ${currentCellIndex}-${capturableCellIndex}`
+                    );
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = {
+                            pawnIndex: pawn.id,
+                            targetCellIndex: capturableCellIndex,
+                            capturedCellIndex: neighbourCellIndex
+                        };
+                    }
+
+                    // errr
+                    if (pawn.id === 9 && currentCellIndex === 12 && capturableCellIndex === 2) {
+                        //
+                        // debugger;
+                    }
+
+                    // undo minimax changes
+                    board.pawns.splice(neighbourPawnIndex, 0, ...tempPawn);
+                    pawn.cellIndex = currentCellIndex;
+                    board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
+                    board.cells[neighbourCellIndex].pawnIndex = neighbourPawnIndex;
+                }
+
+                // check for neighbour cells
+                else if (neighbourPawnIndex === undefined) {
+                    // for initializing
+                    if (!bestMove) {
+                        bestMove = { pawnIndex: pawn.id, targetCellIndex: neighbourCellIndex };
+                    }
+
+                    // pre-calc
+                    const currentCellIndex = pawn.cellIndex;
+                    const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                    pawn.cellIndex = neighbourCellIndex;
+                    board.cells[neighbourCellIndex].pawnIndex = currentPawnIndex;
+                    board.cells[currentCellIndex].pawnIndex = undefined;
+
+                    // depth
+                    const score = this.minimax(
+                        board,
+                        MAX_DEPTH,
+                        true,
+                        currentPlayer,
+                        `mov-x pawn(${pawn.id}) ${currentCellIndex}-${neighbourCellIndex}`
+                    );
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = { pawnIndex: pawn.id, targetCellIndex: neighbourCellIndex };
+                    }
+                    // undo minimax changes
+                    pawn.cellIndex = currentCellIndex;
+                    board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
+                    board.cells[neighbourCellIndex].pawnIndex = undefined;
+                }
+            }
+        }
+        console.log(bestMove, board);
+        // initiate board move
+        if (bestMove) {
+            this.movePawn(board, bestMove);
+            board.currentPlayer = board.currentPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
+        }
+        // toggle player
+    }
+
+    validate(board: CrossBoard, status: string, depth: number) {
+        for (let i = 0; i < this.pawns.length; i++) {
+            const pawn = board.pawns[i];
+            const t = board.cells[pawn.cellIndex].pawnIndex;
+            // if (board.cells[pawn.cellIndex].pawnIndex !== pawn.cellIndex) {
+            //     console.log(status, board);
+            //     throw `error ${i} ${board.cells[pawn.cellIndex].pawnIndex}`;
+            // }
+        }
+    }
+
+    minimax(board: CrossBoard, depth: number, isMaximizing: boolean, currentPlayer: Gamer, status: string): number {
+        this.validate(board, status, depth);
+        const score = this.checkScore(board, currentPlayer);
+
+        const nextPlayer = currentPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
+        if (depth <= 0) return score;
+
+        if (isMaximizing) {
+            let bestScore = -Infinity;
+            // calc start
+            for (const pawn of board.pawns) {
+                if (pawn.owner !== currentPlayer) continue;
                 const currentCell = board.cells[pawn.cellIndex];
 
                 // find neighbour cell
@@ -84,64 +210,192 @@ class CrossBoard {
                     const neighbourPawnIndex = board.cells[neighbourCellIndex].pawnIndex;
 
                     // check for capturable cells
-                    // if (capturableCellIndex !== undefined) {
-                    //     const capturablePawnIndex = board.cells[capturableCellIndex].pawnIndex;
+                    if (
+                        capturableCellIndex !== undefined &&
+                        board.cells[capturableCellIndex].pawnIndex === undefined &&
+                        neighbourPawnIndex !== undefined &&
+                        board.pawns[neighbourPawnIndex].owner !== currentPlayer
+                    ) {
+                        // pre-calc
+                        const currentCellIndex = pawn.cellIndex;
+                        const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                        pawn.cellIndex = capturableCellIndex;
+                        board.cells[capturableCellIndex].pawnIndex = currentPawnIndex;
+                        board.cells[currentCellIndex].pawnIndex = undefined;
+                        const tempPawn = board.pawns.splice(neighbourPawnIndex, 1);
+                        board.cells[neighbourCellIndex].pawnIndex = undefined;
 
-                    //     if (neighbourPawnIndex !== undefined && board.pawns[neighbourPawnIndex].owner !== currentPlayer) {
-                    //     }
-                    // }
-
-                    // check for neighbour cells
-                    if (neighbourPawnIndex === undefined) {
-                        // for initializing
-                        if (!bestMove) {
-                            bestMove = { pawnIndex: pawn.id, targetIndex: neighbourCellIndex };
+                        // errr
+                        if (pawn.id == 9 && currentCellIndex == 12 && capturableCellIndex == 2) {
+                            //
+                            // debugger;
                         }
-
-                        const prevCellIndex = pawn.cellIndex;
-                        pawn.cellIndex = neighbourCellIndex;
-                        board.cells[prevCellIndex].pawnIndex = undefined;
 
                         // depth
-                        const score = this.minimax(board, 2, true, currentPlayer);
+                        const score = this.minimax(
+                            board,
+                            MAX_DEPTH - 1,
+                            false,
+                            nextPlayer,
+                            `cap pawn(${pawn.id}) ${currentCellIndex}-${capturableCellIndex}`
+                        );
                         if (score > bestScore) {
                             bestScore = score;
-                            bestMove = { pawnIndex: pawn.id, targetIndex: neighbourCellIndex };
+                        }
+
+                        // errr
+                        if (pawn.id === 9 && currentCellIndex === 12 && capturableCellIndex === 2) {
+                            //
+                            // debugger;
+                        }
+
+                        // undo minimax changes
+                        board.pawns.splice(neighbourPawnIndex, 0, ...tempPawn);
+                        pawn.cellIndex = currentCellIndex;
+                        board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
+                        board.cells[neighbourCellIndex].pawnIndex = neighbourPawnIndex;
+                    }
+
+                    // check for neighbour cells
+                    else if (neighbourPawnIndex === undefined) {
+                        // pre-calc
+                        const currentCellIndex = pawn.cellIndex;
+                        const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                        pawn.cellIndex = neighbourCellIndex;
+                        board.cells[neighbourCellIndex].pawnIndex = currentPawnIndex;
+                        board.cells[currentCellIndex].pawnIndex = undefined;
+
+                        // depth
+                        const score = this.minimax(
+                            board,
+                            MAX_DEPTH - 1,
+                            false,
+                            nextPlayer,
+                            `mov pawn(${pawn.id}) ${currentCellIndex}-${neighbourCellIndex}`
+                        );
+                        if (score > bestScore) {
+                            bestScore = score;
                         }
                         // undo minimax changes
-                        pawn.cellIndex = prevCellIndex;
-                        board.cells[prevCellIndex].pawnIndex = pawn.id;
+                        pawn.cellIndex = currentCellIndex;
+                        board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
+                        board.cells[neighbourCellIndex].pawnIndex = undefined;
                     }
                 }
             }
-        }
-        console.log(bestMove);
-        // initiate board move
-        if (bestMove) {
-            this.movePawn(board, bestMove.pawnIndex, bestMove?.targetIndex);
-            board.currentPlayer = board.currentPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
-        }
-        // toggle player
-    }
-
-    minimax(board: CrossBoard, depth: number, isMaximizing: boolean, currentPlayer: Gamer): number {
-        const score = this.checkScore(board, currentPlayer);
-        if (depth <= 0) return score;
-
-        if (isMaximizing) {
-            let bestScore = -Infinity;
+            // calc end
             return bestScore;
         } else {
             let bestScore = Infinity;
+            // calc start
+            for (const pawn of board.pawns) {
+                if (pawn.owner !== currentPlayer) continue;
+                const currentCell = board.cells[pawn.cellIndex];
+
+                // find neighbour cell
+                for (const connector of currentCell.connectingIndices) {
+                    const neighbourCellIndex = connector[0];
+                    const capturableCellIndex = connector[1];
+                    const neighbourPawnIndex = board.cells[neighbourCellIndex].pawnIndex;
+
+                    // check for capturable cells
+                    if (
+                        capturableCellIndex !== undefined &&
+                        board.cells[capturableCellIndex].pawnIndex === undefined &&
+                        neighbourPawnIndex !== undefined &&
+                        board.pawns[neighbourPawnIndex].owner !== currentPlayer
+                    ) {
+                        // pre-calc
+                        const currentCellIndex = pawn.cellIndex;
+                        const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                        pawn.cellIndex = capturableCellIndex;
+                        board.cells[capturableCellIndex].pawnIndex = currentPawnIndex;
+                        board.cells[currentCellIndex].pawnIndex = undefined;
+                        const tempPawn = board.pawns.splice(neighbourPawnIndex, 1);
+                        board.cells[neighbourCellIndex].pawnIndex = undefined;
+
+                        // errr
+                        if (pawn.id == 9 && currentCellIndex == 12 && capturableCellIndex == 2) {
+                            //
+                            // debugger;
+                        }
+
+                        // depth
+                        const score = this.minimax(
+                            board,
+                            MAX_DEPTH - 1,
+                            true,
+                            nextPlayer,
+                            `cap pawn(${pawn.id}) ${currentCellIndex}-${capturableCellIndex}`
+                        );
+                        if (score > bestScore) {
+                            bestScore = score;
+                        }
+
+                        // errr
+                        if (pawn.id === 9 && currentCellIndex === 12 && capturableCellIndex === 2) {
+                            //
+                            // debugger;
+                        }
+
+                        // undo minimax changes
+                        board.pawns.splice(neighbourPawnIndex, 0, ...tempPawn);
+                        pawn.cellIndex = currentCellIndex;
+                        board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
+                        board.cells[neighbourCellIndex].pawnIndex = neighbourPawnIndex;
+                    }
+
+                    // check for neighbour cells
+                    else if (neighbourPawnIndex === undefined) {
+                        // for initializing
+
+                        // pre-calc
+                        const currentCellIndex = pawn.cellIndex;
+                        const currentPawnIndex = board.cells[currentCellIndex].pawnIndex;
+                        pawn.cellIndex = neighbourCellIndex;
+                        board.cells[neighbourCellIndex].pawnIndex = currentPawnIndex;
+                        board.cells[currentCellIndex].pawnIndex = undefined;
+
+                        // depth
+                        const score = this.minimax(
+                            board,
+                            MAX_DEPTH - 1,
+                            true,
+                            nextPlayer,
+                            `mov-x pawn(${pawn.id}) ${currentCellIndex}-${neighbourCellIndex}`
+                        );
+                        if (score > bestScore) {
+                            bestScore = score;
+                        }
+                        // undo minimax changes
+                        pawn.cellIndex = currentCellIndex;
+                        board.cells[currentCellIndex].pawnIndex = currentPawnIndex;
+                        board.cells[neighbourCellIndex].pawnIndex = undefined;
+                    }
+                }
+            }
+            // calc end
             return bestScore;
         }
     }
 
-    movePawn(board: CrossBoard, pawnIndex: number, targetCellIndex: number): CrossBoard {
+    movePawn(board: CrossBoard, bestMove: TBestMove): CrossBoard {
+        if (!bestMove) return board;
+
+        const { pawnIndex, targetCellIndex, capturedCellIndex } = bestMove;
         const currCellIndex = board.pawns[pawnIndex].cellIndex;
         board.pawns[pawnIndex].cellIndex = targetCellIndex;
         board.cells[currCellIndex].pawnIndex = undefined;
         board.cells[targetCellIndex].pawnIndex = pawnIndex;
+        if (capturedCellIndex !== undefined) {
+            // delete pawn
+            const capturedPawnIndex = board.cells[capturedCellIndex].pawnIndex;
+            if (capturedPawnIndex !== undefined) {
+                board.pawns.splice(capturedPawnIndex, 1);
+                board.cells[capturedCellIndex].pawnIndex = undefined;
+                console.log('xxxxx ', capturedCellIndex);
+            }
+        }
         return board;
     }
     update(deltaTime: number): this {
