@@ -1,7 +1,7 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import CrossBoard from 'src/libs/cross-board-2';
-import { Gamer } from 'src/utils/utils';
+import { Gamer, MOUSE_BTN } from 'src/utils/utils';
 
 /**--------------------------------- */
 // variables & types
@@ -41,6 +41,11 @@ const sketch = (p5: P5) => {
     p5.draw = () => {
         p5.background(200, 60, 10);
         board?.update(p5.deltaTime).draw();
+    };
+
+    p5.mouseClicked = (e: MouseEvent) => {
+        if (e.button !== MOUSE_BTN.LEFT) return false;
+        board.nextMove(board);
     };
 
     /**--------------------------------- */
