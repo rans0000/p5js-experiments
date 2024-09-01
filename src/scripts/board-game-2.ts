@@ -34,7 +34,6 @@ const sketch = (p5: P5) => {
         p5.colorMode(p5.HSB);
         window.addEventListener('resize', () => resizeDisplay(p5));
         init(p5);
-        p5.noLoop();
     };
 
     /** draw */
@@ -45,9 +44,11 @@ const sketch = (p5: P5) => {
 
     p5.mouseClicked = (e: MouseEvent) => {
         if (e.button !== MOUSE_BTN.LEFT) return;
-        p5.background(200, 60, 10);
-        board.nextMove(board);
-        board.update(1).draw();
+        console.log(board);
+
+        // p5.background(200, 60, 10);
+        // board.nextMove(board);
+        // board.update(1).draw();
     };
 
     /**--------------------------------- */
@@ -67,6 +68,8 @@ const sketch = (p5: P5) => {
         //     showHelpers: options.showHelpers
         // });
         board = new CrossBoard(p5, { currentPlayer: Gamer.PLAYER, showHelpers: options.showHelpers });
+        board.currentPlayer === Gamer.PLAYER ? p5.loop() : p5.noLoop();
+
         // console.log(board.points.map((p) => [p.pos.x, p.pos.y]));
     }
 

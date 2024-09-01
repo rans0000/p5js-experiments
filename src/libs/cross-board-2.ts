@@ -3,7 +3,7 @@ import { Gamer } from 'src/utils/utils';
 
 // --------------------------------------------------------
 const OFFSET = new P5.Vector(150, 150);
-const CELL_RADIUS = 50;
+const PAWN_RADIUS = 30;
 const DIMENSION = 100;
 const MAX_DEPTH = 5;
 let count = 0;
@@ -437,11 +437,13 @@ class CrossBoard {
     }
 
     draw() {
+        this.p5.cursor(this.p5.ARROW);
+
         for (let i = 0; i < this.cells.length; i++) {
             const { x: x1, y: y1 } = this.cells[i].pos;
             const posX = OFFSET.x + x1 * DIMENSION;
             const posY = OFFSET.y + y1 * DIMENSION;
-            const currentCell = this.p5.createVector(posX, posY);
+            const currentCellPos = this.p5.createVector(posX, posY);
 
             // draw lines to neighbours
             this.cells[i].connectingIndices.forEach((neighbour) => {
@@ -466,16 +468,18 @@ class CrossBoard {
             }
 
             // draw hover point
-            const distance = this.p5.createVector(this.p5.mouseX, this.p5.mouseY).sub(currentCell).mag();
-            if (distance < CELL_RADIUS) {
-                this.p5.cursor(this.p5.HAND);
-                this.p5.noStroke();
-                this.p5.fill(255);
-                this.p5.circle(
-                    currentCell.x,
-                    currentCell.y,
-                    this.p5.constrain(CELL_RADIUS - distance, 0, CELL_RADIUS * 0.3)
-                );
+            if ((this.state === STATE.NORMAL || this.state === STATE.DRAG) && this.cells[i].pawn?.owner !== Gamer.AI) {
+                const distance = this.p5.createVector(this.p5.mouseX, this.p5.mouseY).sub(currentCellPos).mag();
+                if (distance < PAWN_RADIUS) {
+                    this.p5.cursor(this.p5.HAND);
+                    this.p5.noStroke();
+                    this.p5.fill(255);
+                    this.p5.circle(
+                        currentCellPos.x,
+                        currentCellPos.y,
+                        this.p5.constrain(PAWN_RADIUS - distance, 0, PAWN_RADIUS * 0.5)
+                    );
+                }
             }
         }
 
@@ -525,10 +529,17 @@ class Pawn {
     }
 
     draw() {
+        const { mouseX, mouseY } = this.p5;
+        // pawn style
         this.p5.noStroke();
         this.owner === Gamer.AI ? this.p5.fill(10, 80, 70) : this.p5.fill(200, 80, 70);
         this.p5.ellipseMode(this.p5.CENTER);
-        this.p5.circle(this.pos.x, this.pos.y, CELL_RADIUS * 0.6);
+        this.p5.circle(this.pos.x, this.pos.y, PAWN_RADIUS);
+
+        // draw curson
+        if (this.owner === Gamer.PLAYER && this.p5.createVector(mouseX, mouseY).dist(this.pos) < PAWN_RADIUS) {
+            this.p5.cursor(this.p5.HAND);
+        }
 
         if (this.board.showHelpers) {
             // points texts
