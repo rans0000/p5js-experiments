@@ -19,7 +19,7 @@ const sketch = (p5: P5) => {
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
     gui.add(options, 'showHelpers').onChange((val) => {
-        // board.setValues('showHelpers', val);
+        board.setValues('showHelpers', val);
     });
     gui.add(options, 'size', 200, 500, 10).onChange((val) => {
         // board.setValues('size', val);
@@ -66,7 +66,7 @@ const sketch = (p5: P5) => {
         //     size: options.size,
         //     showHelpers: options.showHelpers
         // });
-        board = new CrossBoard(p5, { currentPlayer: Gamer.PLAYER });
+        board = new CrossBoard(p5, { currentPlayer: Gamer.PLAYER, showHelpers: options.showHelpers });
         // console.log(board.points.map((p) => [p.pos.x, p.pos.y]));
     }
 

@@ -10,21 +10,24 @@ let count = 0;
 const ENABLE_PRUNING = true;
 // --------------------------------------------------------
 
-export type TCrossBoard = {
+type TCrossBoard = {
     cells: TCrossBoardCell[];
     pawns: Pawn[];
     currentPlayer: Gamer;
-};
-type TCrossBoardConfig = Pick<TCrossBoard, 'currentPlayer'>;
 
-export type TCrossBoardCell = {
+    state: STATE;
+    showHelpers: boolean;
+};
+type TCrossBoardConfig = Pick<TCrossBoard, 'currentPlayer' | 'showHelpers'>;
+
+type TCrossBoardCell = {
     id: number;
     pos: P5.Vector;
     connectingIndices: [number, number | undefined][];
     pawn: null | Pawn;
 };
 
-export type TCrossBoardPawn = {
+type TCrossBoardPawn = {
     id: number;
     pos: P5.Vector;
     owner: Gamer;
@@ -32,7 +35,6 @@ export type TCrossBoardPawn = {
 
     board: CrossBoard;
     radius: number;
-    showHelpers: boolean;
 };
 type TCrossBoardPawnConfig = Pick<TCrossBoardPawn, 'id' | 'board' | 'owner' | 'cellIndex'>;
 
@@ -43,6 +45,14 @@ type TBestMove = {
     bestScore: number;
 } | null;
 
+type Keys = 'showHelpers';
+
+enum STATE {
+    NORMAL,
+    ANIMATION,
+    DRAG
+}
+
 // --------------------------------------------------------
 // --------------------------------------------------------
 class CrossBoard {
@@ -50,14 +60,20 @@ class CrossBoard {
 
     cells: TCrossBoardCell[];
     pawns: Pawn[];
-
     currentPlayer: Gamer;
 
-    constructor(p5: P5, config: TCrossBoardConfig) {
+    state: STATE;
+    showHelpers: boolean;
+
+    constructor(p5: P5, _config?: Partial<TCrossBoardConfig>) {
+        const config: TCrossBoardConfig = { showHelpers: false, currentPlayer: Gamer.PLAYER, ..._config };
         this.p5 = p5;
         this.currentPlayer = config.currentPlayer;
         this.pawns = buildPawns(p5, this);
         this.cells = buildBoard(p5, this.pawns);
+
+        this.state = STATE.NORMAL;
+        this.showHelpers = config.showHelpers;
     }
 
     checkScore(board: CrossBoard, player: Gamer): number {
@@ -437,7 +453,7 @@ class CrossBoard {
             });
 
             // draw helpers
-            if (true) {
+            if (this.showHelpers) {
                 // points texts
                 this.p5.stroke(255);
                 this.p5.strokeWeight(1);
@@ -466,6 +482,16 @@ class CrossBoard {
         // draw cells
         for (const pawn of this.pawns) {
             pawn.draw();
+        }
+    }
+
+    setValues(key: Keys, value: boolean) {
+        switch (key) {
+            case 'showHelpers':
+                this.showHelpers = value;
+                break;
+            default:
+                throw 'Unsupported key passed to setValues()';
         }
     }
 }
@@ -504,7 +530,7 @@ class Pawn {
         this.p5.ellipseMode(this.p5.CENTER);
         this.p5.circle(this.pos.x, this.pos.y, CELL_RADIUS * 0.6);
 
-        if (true || this.showHelpers) {
+        if (this.board.showHelpers) {
             // points texts
             this.p5.stroke(255);
             this.p5.strokeWeight(1);
@@ -694,75 +720,75 @@ function buildBoard(p5: P5, pawns: Pawn[]) {
     return points;
 }
 // llllllllllllllllllllllll
-function buildPawns2(p5: P5, board: CrossBoard) {
-    const pawns: Pawn[] = [
-        new Pawn(p5, { id: 0, board, owner: Gamer.PLAYER, cellIndex: 0 }),
-        new Pawn(p5, { id: 1, board, owner: Gamer.AI, cellIndex: 1 }),
-        new Pawn(p5, { id: 2, board, owner: Gamer.AI, cellIndex: 2 })
-    ];
+// function buildPawns2(p5: P5, board: CrossBoard) {
+//     const pawns: Pawn[] = [
+//         new Pawn(p5, { id: 0, board, owner: Gamer.PLAYER, cellIndex: 0 }),
+//         new Pawn(p5, { id: 1, board, owner: Gamer.AI, cellIndex: 1 }),
+//         new Pawn(p5, { id: 2, board, owner: Gamer.AI, cellIndex: 2 })
+//     ];
 
-    return pawns;
-}
+//     return pawns;
+// }
 
-function buildBoard2(p5: P5, pawns: Pawn[]) {
-    // build points
-    const points: TCrossBoardCell[] = [
-        {
-            id: 0,
-            pos: p5.createVector(0, 0),
-            connectingIndices: [
-                [2, 4],
-                [1, undefined],
-                [3, undefined]
-            ],
-            pawn: pawns[0]
-        },
-        {
-            id: 1,
-            pos: p5.createVector(2, 0),
-            connectingIndices: [
-                [2, 3],
-                [0, undefined],
-                [4, undefined]
-            ],
-            pawn: pawns[1]
-        },
-        {
-            id: 2,
-            pos: p5.createVector(1, 1),
-            connectingIndices: [
-                [0, undefined],
-                [1, undefined],
-                [3, undefined],
-                [4, undefined]
-            ],
-            pawn: pawns[2]
-        },
+// function buildBoard2(p5: P5, pawns: Pawn[]) {
+//     // build points
+//     const points: TCrossBoardCell[] = [
+//         {
+//             id: 0,
+//             pos: p5.createVector(0, 0),
+//             connectingIndices: [
+//                 [2, 4],
+//                 [1, undefined],
+//                 [3, undefined]
+//             ],
+//             pawn: pawns[0]
+//         },
+//         {
+//             id: 1,
+//             pos: p5.createVector(2, 0),
+//             connectingIndices: [
+//                 [2, 3],
+//                 [0, undefined],
+//                 [4, undefined]
+//             ],
+//             pawn: pawns[1]
+//         },
+//         {
+//             id: 2,
+//             pos: p5.createVector(1, 1),
+//             connectingIndices: [
+//                 [0, undefined],
+//                 [1, undefined],
+//                 [3, undefined],
+//                 [4, undefined]
+//             ],
+//             pawn: pawns[2]
+//         },
 
-        {
-            id: 3,
-            pos: p5.createVector(0, 2),
-            connectingIndices: [
-                [2, 1],
-                [0, undefined],
-                [4, undefined]
-            ],
-            pawn: null
-        },
-        {
-            id: 4,
-            pos: p5.createVector(2, 2),
-            connectingIndices: [
-                [2, 0],
-                [1, undefined],
-                [3, undefined]
-            ],
-            pawn: null
-        }
-    ];
+//         {
+//             id: 3,
+//             pos: p5.createVector(0, 2),
+//             connectingIndices: [
+//                 [2, 1],
+//                 [0, undefined],
+//                 [4, undefined]
+//             ],
+//             pawn: null
+//         },
+//         {
+//             id: 4,
+//             pos: p5.createVector(2, 2),
+//             connectingIndices: [
+//                 [2, 0],
+//                 [1, undefined],
+//                 [3, undefined]
+//             ],
+//             pawn: null
+//         }
+//     ];
 
-    return points;
-}
+//     return points;
+// }
 // --------------------------------------------------------
 // --------------------------------------------------------
 export default CrossBoard;
