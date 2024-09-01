@@ -5,6 +5,7 @@ import { Gamer } from 'src/utils/utils';
 const OFFSET = new P5.Vector(150, 150);
 const PAWN_RADIUS = 30;
 const DIMENSION = 100;
+const SNAP_RADIUS = 30;
 const MAX_DEPTH = 5;
 let count = 0;
 const ENABLE_PRUNING = true;
@@ -34,14 +35,15 @@ type TCrossBoardPawn = {
     cellIndex: number;
 
     board: CrossBoard;
-    radius: number;
+    state: STATE;
+    targetCell: number;
 };
 type TCrossBoardPawnConfig = Pick<TCrossBoardPawn, 'id' | 'board' | 'owner' | 'cellIndex'>;
 
 type TBestMove = {
     pawnId: number;
     targetCellIndex: number;
-    capturedCellIndex?: number;
+    capturedPawnIndex?: number;
     bestScore: number;
 } | null;
 
@@ -142,7 +144,7 @@ class CrossBoard {
                         bestMove = {
                             pawnId: pawn.id,
                             targetCellIndex: capturableCellIndex,
-                            capturedCellIndex: neighbourCellIndex,
+                            capturedPawnIndex: neighbourCellIndex,
                             bestScore
                         };
                     }
@@ -407,7 +409,7 @@ class CrossBoard {
 
     movePawn(board: CrossBoard, bestMove: TBestMove): CrossBoard {
         if (!bestMove) return board;
-        const { pawnId, targetCellIndex, capturedCellIndex } = bestMove;
+        const { pawnId, targetCellIndex, capturedPawnIndex } = bestMove;
         const pawn = board.pawns.find((p) => p.id === pawnId);
         if (pawn !== undefined) {
             const tempCell = pawn.cellIndex;
@@ -415,28 +417,31 @@ class CrossBoard {
             board.cells[targetCellIndex].pawn = pawn;
             board.cells[tempCell].pawn = null;
 
-            if (capturedCellIndex !== undefined) {
-                const capturedPawn = board.pawns[capturedCellIndex];
+            if (capturedPawnIndex !== undefined) {
+                const capturedPawn = board.pawns[capturedPawnIndex];
                 const index = board.pawns.findIndex((p) => p.id === capturedPawn.id);
                 if (index > -1) {
                     board.pawns.splice(index, 1);
-                    board.cells[capturedCellIndex].pawn = null;
+                    board.cells[capturedPawnIndex].pawn = null;
                 }
             }
         }
         return board;
     }
     update(deltaTime: number): this {
+        // board:update()
         // update pawns
         for (let i = 0; i < this.pawns.length; i++) {
             const pawn = this.pawns[i];
             const cell = this.cells[pawn.cellIndex];
-            pawn.update(this.p5.deltaTime, OFFSET.x + cell.pos.x * DIMENSION, OFFSET.y + cell.pos.y * DIMENSION);
+            // pawn.update(this.p5.deltaTime, OFFSET.x + cell.pos.x * DIMENSION, OFFSET.y + cell.pos.y * DIMENSION);
+            pawn.update(deltaTime, OFFSET.x, OFFSET.y);
         }
         return this;
     }
 
     draw() {
+        // bord:draw()
         this.p5.cursor(this.p5.ARROW);
 
         for (let i = 0; i < this.cells.length; i++) {
@@ -510,8 +515,8 @@ class Pawn {
     cellIndex: number;
 
     board: CrossBoard;
-    radius: number;
-    showHelpers: boolean;
+    state: STATE;
+    targetCell: number;
 
     constructor(p5: P5, config: TCrossBoardPawnConfig) {
         this.p5 = p5;
@@ -520,15 +525,112 @@ class Pawn {
         this.owner = config.owner;
         this.cellIndex = config.cellIndex;
         this.pos = p5.createVector(0, 0);
+        this.state = STATE.NORMAL;
     }
-    update(deltaTime: number, posX: number, posY: number): this {
-        // update Cells
-        this.pos.x = posX;
-        this.pos.y = posY;
+    update(deltaTime: number, offsetX: number, offsetY: number): this {
+        // pawn:update()
+        const board = this.board;
+        const cells = this.board.cells;
+        const parentPos = this.p5.createVector(
+            offsetX + cells[this.cellIndex].pos.x * DIMENSION,
+            offsetY + cells[this.cellIndex].pos.y * DIMENSION
+        );
+        const mousePos = this.p5.createVector(this.p5.mouseX, this.p5.mouseY);
+
+        // update Cells at rest
+        if (this.state === STATE.NORMAL && board.state === STATE.NORMAL && !this.p5.mouseIsPressed) {
+            this.pos.set(parentPos.x, parentPos.y);
+
+            return this;
+        }
+
+        // initiate dragging
+        if (
+            this.owner === Gamer.PLAYER &&
+            this.p5.mouseIsPressed &&
+            board.state === STATE.NORMAL &&
+            this.state === STATE.NORMAL
+        ) {
+            const distance = parentPos.copy().sub(mousePos).mag();
+            if (distance < SNAP_RADIUS) {
+                board.state = this.state = STATE.DRAG;
+                return this;
+            }
+        }
+
+        // continue dragging
+        if (this.owner === Gamer.PLAYER && this.state === STATE.DRAG && this.p5.mouseIsPressed) {
+            this.pos.set(mousePos.x, mousePos.y);
+        }
+
+        // finish drag state when mouseup
+        if (this.owner === Gamer.PLAYER && this.state === STATE.DRAG && !this.p5.mouseIsPressed) {
+            board.state = this.state = STATE.ANIMATION;
+
+            // calculate the permissible cells
+            const length = board.cells.length;
+
+            for (let i = 0; i < length; i++) {
+                if (this.cellIndex === i || cells[i].pawn) continue;
+
+                const currentCell = cells[i];
+
+                const pos = this.p5.createVector(
+                    offsetX + currentCell.pos.x * DIMENSION,
+                    offsetY + currentCell.pos.y * DIMENSION
+                );
+                const distance = pos.copy().sub(this.pos).mag();
+                if (distance < SNAP_RADIUS) {
+                    const { isLegal } = this.getLegalMove(board, this.cellIndex, i);
+                    if (!isLegal) continue;
+                    // set the new target cell to move
+                    this.targetCell = i;
+                    return this;
+                }
+            }
+
+            // no snappable points, return to home
+            this.targetCell = this.cellIndex;
+
+            return this;
+        }
+
+        // travel to position
+        if (this.state === STATE.ANIMATION) {
+            const targetPos = this.p5.createVector(
+                offsetX + cells[this.targetCell].pos.x * DIMENSION,
+                offsetY + cells[this.targetCell].pos.y * DIMENSION
+            );
+            const distance = targetPos.copy().sub(this.pos).mag();
+
+            // if near a cell, snap to it
+            if (distance < SNAP_RADIUS) {
+                board.state = this.state = STATE.NORMAL;
+                this.pos.set(targetPos.x, targetPos.y);
+
+                // @todo: handle move  commit
+                if (this.targetCell !== this.cellIndex) {
+                    const { capturedPawnIndex } = this.getLegalMove(board, this.cellIndex, this.targetCell);
+                    const bestMove: TBestMove = {
+                        pawnId: this.id,
+                        targetCellIndex: this.targetCell,
+                        capturedPawnIndex,
+                        bestScore: 0
+                    };
+                    board.movePawn(board, bestMove);
+                }
+                return this;
+            }
+
+            // if not near any cells, move to target
+            this.pos.add(targetPos).div(2);
+        }
+
         return this;
     }
 
     draw() {
+        // pawn:draw()
         const { mouseX, mouseY } = this.p5;
         // pawn style
         this.p5.noStroke();
@@ -550,6 +652,28 @@ class Pawn {
             this.p5.text(`${this.id} (${this.cellIndex})`, this.pos.x, this.pos.y);
         }
     }
+
+    getLegalMove(
+        board: TCrossBoard,
+        currentCellIndex: number,
+        targetCellIndex: number
+    ): { isLegal: boolean; capturedPawnIndex: number | undefined } {
+        let isLegal = false;
+        let capturedPawnIndex;
+        const cell = board.cells[currentCellIndex];
+
+        for (let i = 0; i < cell.connectingIndices.length; i++) {
+            const connector = cell.connectingIndices[i];
+            if (connector[0] === targetCellIndex) isLegal = true;
+            if (connector[1] === targetCellIndex && board.cells[connector[0]].pawn?.owner !== this.owner) {
+                capturedPawnIndex = board.pawns.findIndex((p) => p.cellIndex === connector[0]);
+                capturedPawnIndex = capturedPawnIndex < 0 ? undefined : capturedPawnIndex;
+                isLegal = true;
+            }
+        }
+
+        return { isLegal, capturedPawnIndex };
+    }
 }
 
 // --------------------------------------------------------
@@ -561,6 +685,7 @@ function buildPawns(p5: P5, board: CrossBoard) {
         new Pawn(p5, { id: 2, board, owner: Gamer.AI, cellIndex: 2 }),
         new Pawn(p5, { id: 3, board, owner: Gamer.AI, cellIndex: 3 }),
         new Pawn(p5, { id: 4, board, owner: Gamer.AI, cellIndex: 4 }),
+        // new Pawn(p5, { id: 4, board, owner: Gamer.AI, cellIndex: 6 }),
 
         new Pawn(p5, { id: 5, board, owner: Gamer.PLAYER, cellIndex: 8 }),
         new Pawn(p5, { id: 6, board, owner: Gamer.PLAYER, cellIndex: 9 }),
@@ -629,6 +754,7 @@ function buildBoard(p5: P5, pawns: Pawn[]) {
                 [6, 8]
             ],
             pawn: pawns[4]
+            // pawn: null
         },
 
         {
@@ -657,6 +783,7 @@ function buildBoard(p5: P5, pawns: Pawn[]) {
                 [5, undefined]
             ],
             pawn: null
+            // pawn: pawns[4]
         },
         {
             id: 7,
@@ -730,76 +857,7 @@ function buildBoard(p5: P5, pawns: Pawn[]) {
 
     return points;
 }
-// llllllllllllllllllllllll
-// function buildPawns2(p5: P5, board: CrossBoard) {
-//     const pawns: Pawn[] = [
-//         new Pawn(p5, { id: 0, board, owner: Gamer.PLAYER, cellIndex: 0 }),
-//         new Pawn(p5, { id: 1, board, owner: Gamer.AI, cellIndex: 1 }),
-//         new Pawn(p5, { id: 2, board, owner: Gamer.AI, cellIndex: 2 })
-//     ];
 
-//     return pawns;
-// }
-
-// function buildBoard2(p5: P5, pawns: Pawn[]) {
-//     // build points
-//     const points: TCrossBoardCell[] = [
-//         {
-//             id: 0,
-//             pos: p5.createVector(0, 0),
-//             connectingIndices: [
-//                 [2, 4],
-//                 [1, undefined],
-//                 [3, undefined]
-//             ],
-//             pawn: pawns[0]
-//         },
-//         {
-//             id: 1,
-//             pos: p5.createVector(2, 0),
-//             connectingIndices: [
-//                 [2, 3],
-//                 [0, undefined],
-//                 [4, undefined]
-//             ],
-//             pawn: pawns[1]
-//         },
-//         {
-//             id: 2,
-//             pos: p5.createVector(1, 1),
-//             connectingIndices: [
-//                 [0, undefined],
-//                 [1, undefined],
-//                 [3, undefined],
-//                 [4, undefined]
-//             ],
-//             pawn: pawns[2]
-//         },
-
-//         {
-//             id: 3,
-//             pos: p5.createVector(0, 2),
-//             connectingIndices: [
-//                 [2, 1],
-//                 [0, undefined],
-//                 [4, undefined]
-//             ],
-//             pawn: null
-//         },
-//         {
-//             id: 4,
-//             pos: p5.createVector(2, 2),
-//             connectingIndices: [
-//                 [2, 0],
-//                 [1, undefined],
-//                 [3, undefined]
-//             ],
-//             pawn: null
-//         }
-//     ];
-
-//     return points;
-// }
 // --------------------------------------------------------
 // --------------------------------------------------------
 export default CrossBoard;
