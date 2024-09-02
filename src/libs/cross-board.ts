@@ -104,7 +104,6 @@ class CrossBoard {
         let alpha = -Infinity;
         let beta = Infinity;
 
-        // console.log('player: ', currentPlayer);
         // search through the available pawns
         for (const pawn of board.pawns) {
             if (pawn.owner !== currentPlayer) continue;
@@ -195,7 +194,6 @@ class CrossBoard {
                 }
             }
         }
-        console.log('AI: ', bestMove, board);
         // initiate board move
         if (bestMove) {
             this.movePawn(board, bestMove);
@@ -215,7 +213,6 @@ class CrossBoard {
     ): number {
         ++count;
         const score = this.checkScore(board, lastPlayer);
-        // console.log(' '.padStart((MAX_DEPTH - depth) * 3, ' '), status, '--', score, `${depth}D`, count);
 
         const currentPlayer = lastPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
         // if (depth <= 0 || count > 100) return score;
@@ -590,6 +587,7 @@ class Pawn {
                 const distance = pos.copy().sub(this.pos).mag();
                 if (distance < SNAP_RADIUS) {
                     const { isLegal } = this.getLegalMove(board, this.cellIndex, i);
+
                     if (!isLegal) continue;
                     // set the new target cell to move
                     this.targetCell = i;
@@ -616,9 +614,11 @@ class Pawn {
                 board.state = this.state = STATE.NORMAL;
                 this.pos.set(targetPos.x, targetPos.y);
 
-                // @todo: handle move  commit
+                // commit to the move
                 if (this.targetCell !== this.cellIndex) {
-                    const { capturedPawnId } = this.getLegalMove(board, this.cellIndex, this.targetCell);
+                    const { capturedPawnId, isLegal } = this.getLegalMove(board, this.cellIndex, this.targetCell);
+
+                    if (!isLegal) return this;
 
                     const bestMove: TBestMove = {
                         pawnId: this.id,
@@ -626,7 +626,6 @@ class Pawn {
                         capturedPawnId,
                         bestScore: 0
                     };
-                    console.log('PL: ', bestMove, board);
                     board.movePawn(board, bestMove);
 
                     // check for a winner
@@ -689,7 +688,11 @@ class Pawn {
         for (let i = 0; i < cell.connectingIndices.length; i++) {
             const connector = cell.connectingIndices[i];
             if (connector[0] === targetCellIndex) isLegal = true;
-            if (connector[1] === targetCellIndex && board.cells[connector[0]].pawn?.owner !== this.owner) {
+            if (
+                connector[1] === targetCellIndex &&
+                board.cells[connector[0]].pawn?.owner !== this.owner &&
+                board.cells[connector[0]].pawn?.owner !== undefined
+            ) {
                 const capturedPawn = board.pawns.find((p) => p.cellIndex === connector[0]);
                 capturedPawnId = capturedPawn?.id;
                 isLegal = true;
