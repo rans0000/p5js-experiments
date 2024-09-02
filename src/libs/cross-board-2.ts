@@ -18,8 +18,9 @@ type TCrossBoard = {
 
     state: STATE;
     showHelpers: boolean;
+    onResolve?: (status: Gamer) => void;
 };
-type TCrossBoardConfig = Pick<TCrossBoard, 'currentPlayer' | 'showHelpers'>;
+type TCrossBoardConfig = Pick<TCrossBoard, 'currentPlayer' | 'showHelpers' | 'onResolve'>;
 
 type TCrossBoardCell = {
     id: number;
@@ -43,7 +44,7 @@ type TCrossBoardPawnConfig = Pick<TCrossBoardPawn, 'id' | 'board' | 'owner' | 'c
 type TBestMove = {
     pawnId: number;
     targetCellIndex: number;
-    capturedPawnIndex?: number;
+    capturedPawnId?: number;
     bestScore: number;
 } | null;
 
@@ -52,7 +53,8 @@ type Keys = 'showHelpers';
 enum STATE {
     NORMAL,
     ANIMATION,
-    DRAG
+    DRAG,
+    PAUSED
 }
 
 // --------------------------------------------------------
@@ -66,6 +68,7 @@ class CrossBoard {
 
     state: STATE;
     showHelpers: boolean;
+    onResolve?: (status: Gamer) => void;
 
     constructor(p5: P5, _config?: Partial<TCrossBoardConfig>) {
         const config: TCrossBoardConfig = { showHelpers: false, currentPlayer: Gamer.PLAYER, ..._config };
@@ -76,6 +79,11 @@ class CrossBoard {
 
         this.state = STATE.NORMAL;
         this.showHelpers = config.showHelpers;
+        this.onResolve = config.onResolve;
+    }
+
+    checkGameStatus(board: CrossBoard): Gamer | undefined {
+        return board.pawns.length === 1 ? board.pawns[0].owner : undefined;
     }
 
     checkScore(board: CrossBoard, player: Gamer): number {
@@ -86,8 +94,9 @@ class CrossBoard {
         return score;
     }
 
-    nextMove(board: CrossBoard) {
+    nextMove() {
         count = 0;
+        const board = this;
         const currentPlayer = this.currentPlayer;
         const nextPlayer = currentPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
         let bestScore = -Infinity;
@@ -95,11 +104,10 @@ class CrossBoard {
         let alpha = -Infinity;
         let beta = Infinity;
 
-        console.log('player: ', currentPlayer);
+        // console.log('player: ', currentPlayer);
         // search through the available pawns
         for (const pawn of board.pawns) {
             if (pawn.owner !== currentPlayer) continue;
-            console.log('\nPawn ', pawn.id);
             const currentCell = board.cells[pawn.cellIndex];
 
             // find neighbour cell
@@ -138,17 +146,6 @@ class CrossBoard {
                         beta,
                         `cap// pawn(${pawn.id}) ${stashCellIndex}-${capturableCellIndex}`
                     );
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMove = {
-                            pawnId: pawn.id,
-                            targetCellIndex: capturableCellIndex,
-                            capturedPawnIndex: neighbourCellIndex,
-                            bestScore
-                        };
-                    }
-
                     // undo minimax changes
                     board.pawns.splice(index, 0, capturedPawn);
                     board.cells[capturedPawn.cellIndex].pawn = capturedPawn;
@@ -156,6 +153,16 @@ class CrossBoard {
                     board.cells[stashCellIndex].pawn = pawn;
                     board.cells[neighbourCellIndex].pawn = capturedPawn;
                     board.cells[capturableCellIndex].pawn = null;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = {
+                            pawnId: pawn.id,
+                            targetCellIndex: capturableCellIndex,
+                            capturedPawnId: capturedPawn.id,
+                            bestScore
+                        };
+                    }
                 }
 
                 // check for neighbour cells
@@ -176,19 +183,19 @@ class CrossBoard {
                         beta,
                         `mov// pawn(${pawn.id}) ${stashCellIndex}-${neighbourCellIndex}`
                     );
+                    // undo minimax changes
+                    pawn.cellIndex = stashCellIndex;
+                    board.cells[stashCellIndex].pawn = pawn;
+                    board.cells[neighbourCellIndex].pawn = null;
 
                     if (score > bestScore) {
                         bestScore = score;
                         bestMove = { pawnId: pawn.id, targetCellIndex: neighbourCellIndex, bestScore };
                     }
-                    // undo minimax changes
-                    pawn.cellIndex = stashCellIndex;
-                    board.cells[stashCellIndex].pawn = pawn;
-                    board.cells[neighbourCellIndex].pawn = null;
                 }
             }
         }
-        console.log(bestMove, board);
+        console.log('AI: ', bestMove, board);
         // initiate board move
         if (bestMove) {
             this.movePawn(board, bestMove);
@@ -208,7 +215,7 @@ class CrossBoard {
     ): number {
         ++count;
         const score = this.checkScore(board, lastPlayer);
-        console.log(' '.padStart((MAX_DEPTH - depth) * 3, ' '), status, '--', score, `${depth}D`, count);
+        // console.log(' '.padStart((MAX_DEPTH - depth) * 3, ' '), status, '--', score, `${depth}D`, count);
 
         const currentPlayer = lastPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
         // if (depth <= 0 || count > 100) return score;
@@ -409,7 +416,7 @@ class CrossBoard {
 
     movePawn(board: CrossBoard, bestMove: TBestMove): CrossBoard {
         if (!bestMove) return board;
-        const { pawnId, targetCellIndex, capturedPawnIndex } = bestMove;
+        const { pawnId, targetCellIndex, capturedPawnId } = bestMove;
         const pawn = board.pawns.find((p) => p.id === pawnId);
         if (pawn !== undefined) {
             const tempCell = pawn.cellIndex;
@@ -417,12 +424,13 @@ class CrossBoard {
             board.cells[targetCellIndex].pawn = pawn;
             board.cells[tempCell].pawn = null;
 
-            if (capturedPawnIndex !== undefined) {
-                const capturedPawn = board.pawns[capturedPawnIndex];
-                const index = board.pawns.findIndex((p) => p.id === capturedPawn.id);
+            if (capturedPawnId !== undefined) {
+                const capturedPawn = board.pawns.find((p) => p.id === capturedPawnId);
+                if (!capturedPawn) return board;
+                const index = board.pawns.findIndex((p) => p.id === capturedPawn?.id);
                 if (index > -1) {
+                    board.cells[capturedPawn.cellIndex].pawn = null;
                     board.pawns.splice(index, 1);
-                    board.cells[capturedPawnIndex].pawn = null;
                 }
             }
         }
@@ -610,14 +618,30 @@ class Pawn {
 
                 // @todo: handle move  commit
                 if (this.targetCell !== this.cellIndex) {
-                    const { capturedPawnIndex } = this.getLegalMove(board, this.cellIndex, this.targetCell);
+                    const { capturedPawnId } = this.getLegalMove(board, this.cellIndex, this.targetCell);
+
                     const bestMove: TBestMove = {
                         pawnId: this.id,
                         targetCellIndex: this.targetCell,
-                        capturedPawnIndex,
+                        capturedPawnId,
                         bestScore: 0
                     };
+                    console.log('PL: ', bestMove, board);
                     board.movePawn(board, bestMove);
+
+                    // check for a winner
+                    if (board.currentPlayer === Gamer.PLAYER) {
+                        const winner = board.checkGameStatus(board);
+                        if (winner !== undefined) {
+                            board.state = this.state = STATE.PAUSED;
+                            board.onResolve && board.onResolve(winner);
+                            return this;
+                        }
+
+                        // if there is no winner
+                        board.currentPlayer = Gamer.AI;
+                        board.nextMove();
+                    }
                 }
                 return this;
             }
@@ -657,22 +681,22 @@ class Pawn {
         board: TCrossBoard,
         currentCellIndex: number,
         targetCellIndex: number
-    ): { isLegal: boolean; capturedPawnIndex: number | undefined } {
+    ): { isLegal: boolean; capturedPawnId: number | undefined } {
         let isLegal = false;
-        let capturedPawnIndex;
+        let capturedPawnId;
         const cell = board.cells[currentCellIndex];
 
         for (let i = 0; i < cell.connectingIndices.length; i++) {
             const connector = cell.connectingIndices[i];
             if (connector[0] === targetCellIndex) isLegal = true;
             if (connector[1] === targetCellIndex && board.cells[connector[0]].pawn?.owner !== this.owner) {
-                capturedPawnIndex = board.pawns.findIndex((p) => p.cellIndex === connector[0]);
-                capturedPawnIndex = capturedPawnIndex < 0 ? undefined : capturedPawnIndex;
+                const capturedPawn = board.pawns.find((p) => p.cellIndex === connector[0]);
+                capturedPawnId = capturedPawn?.id;
                 isLegal = true;
             }
         }
 
-        return { isLegal, capturedPawnIndex };
+        return { isLegal, capturedPawnId };
     }
 }
 
