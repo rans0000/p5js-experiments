@@ -1,7 +1,7 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
 import CrossBoard from 'src/libs/cross-board';
-import { Gamer } from 'src/utils/utils';
+import { Gamer, MOUSE_BTN } from 'src/utils/utils';
 
 /**--------------------------------- */
 // variables & types
@@ -22,7 +22,7 @@ const sketch = (p5: P5) => {
         board.setValues('showHelpers', val);
     });
     gui.add(options, 'size', 200, 500, 10).onChange((val) => {
-        board.setValues('size', val);
+        // board.setValues('size', val);
     });
 
     /** setup */
@@ -34,13 +34,21 @@ const sketch = (p5: P5) => {
         p5.colorMode(p5.HSB);
         window.addEventListener('resize', () => resizeDisplay(p5));
         init(p5);
-        // p5.noLoop();
     };
 
     /** draw */
     p5.draw = () => {
         p5.background(200, 60, 10);
-        board?.update(p5.deltaTime)?.draw();
+        board?.update(p5.deltaTime).draw();
+    };
+
+    p5.mouseClicked = (e: MouseEvent) => {
+        if (e.button !== MOUSE_BTN.LEFT) return;
+        // console.log(board);
+
+        // p5.background(200, 60, 10);
+        // board.nextMove(board);
+        // board.update(1).draw();
     };
 
     /**--------------------------------- */
@@ -54,11 +62,14 @@ const sketch = (p5: P5) => {
         p5.background(200, 60, 10);
 
         //setup board
-        board = new CrossBoard(p5, {
-            currentPlayer: Gamer.PLAYER,
-            size: options.size,
-            showHelpers: options.showHelpers
-        });
+        // board = new CrossBoard(p5, {
+        //     currentPlayer: Gamer.PLAYER,
+        //     size: options.size,
+        //     showHelpers: options.showHelpers
+        // });
+        board = new CrossBoard(p5, { currentPlayer: Gamer.PLAYER, showHelpers: options.showHelpers });
+        board.currentPlayer === Gamer.PLAYER ? p5.loop() : p5.noLoop();
+
         // console.log(board.points.map((p) => [p.pos.x, p.pos.y]));
     }
 
