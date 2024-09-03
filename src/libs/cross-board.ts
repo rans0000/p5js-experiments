@@ -535,6 +535,17 @@ class CrossBoard {
                 throw 'Unsupported key passed to setValues()';
         }
     }
+
+    resetGame(_config?: Partial<TCrossBoardConfig>) {
+        const config: TCrossBoardConfig = { showHelpers: false, currentPlayer: Gamer.PLAYER, ..._config };
+        this.currentPlayer = config.currentPlayer;
+        this.pawns = buildPawns(this.p5, this);
+        this.cells = buildBoard(this.p5, this.pawns);
+
+        this.state = STATE.NORMAL;
+        this.showHelpers = config.showHelpers;
+        this.onResolve = config.onResolve;
+    }
 }
 
 // --------------------------------------------------------

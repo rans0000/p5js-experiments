@@ -176,3 +176,9 @@ ul {
         text-transform: uppercase;
     }
 }
+
+.cross-bord {
+    &__score {
+        bottom: 90px;
+    }
+}

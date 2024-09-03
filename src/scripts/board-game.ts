@@ -35,6 +35,16 @@ const sketch = (p5: P5) => {
         p5.pixelDensity(1);
         p5.colorMode(p5.HSB);
         window.addEventListener('resize', () => resizeDisplay(p5));
+
+        // setup markup
+        if (scoreContainer) scoreContainer.style.top = `${(window.innerHeight + options.size) / 2 + 30}px`;
+        scoreContainer?.addEventListener('submit', (event: FormDataEvent) => {
+            event.preventDefault();
+            scoreContainer.style.display = 'none';
+            board.resetGame({ currentPlayer: Gamer.PLAYER, showHelpers: options.showHelpers, onResolve });
+            p5.loop();
+        });
+
         init(p5);
     };
 
@@ -71,8 +81,6 @@ const sketch = (p5: P5) => {
     function onResolve(winner: Gamer) {
         const text = winner === Gamer.PLAYER ? 'You Win!!' : 'You Loose!!';
         console.log(text);
-        alert('ok');
-
         if (scoreContainer) scoreContainer.style.display = 'flex';
         if (statusContainer) statusContainer.innerText = text;
     }
