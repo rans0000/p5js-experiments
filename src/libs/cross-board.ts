@@ -83,15 +83,29 @@ class CrossBoard {
     }
 
     checkGameStatus(board: CrossBoard): Gamer | undefined {
-        return board.pawns.length === 1 ? board.pawns[0].owner : undefined;
+        let aiPawns = 0;
+        let playerPawns = 0;
+        board.pawns.forEach((p) => (p.owner === Gamer.AI ? ++aiPawns : ++playerPawns));
+        let winner = aiPawns === 0 ? Gamer.PLAYER : playerPawns === 0 ? Gamer.AI : undefined;
+        return winner;
     }
 
-    checkScore(board: CrossBoard, player: Gamer): number {
+    checkScore(board: CrossBoard, player: Gamer): { score: number; hasWon: boolean } {
         let score = 0;
+        let hasWon = false;
+        // const hasWon = !board.pawns.some((p) => p.owner === Gamer.AI) || !board.pawns.some((p) => p.owner === Gamer.PLAYER);
         for (const pawn of board.pawns) {
             score += pawn.owner === player ? -1 : 1;
         }
-        return score;
+        // multiply with a large number to influence the weight
+        if (!board.pawns.some((p) => p.owner === Gamer.AI)) {
+            score *= 1000;
+            hasWon = true;
+        } else if (!board.pawns.some((p) => p.owner === Gamer.PLAYER)) {
+            score *= -1000;
+            hasWon = true;
+        }
+        return { score, hasWon };
     }
 
     nextMove() {
@@ -103,6 +117,7 @@ class CrossBoard {
         let bestMove: TBestMove = null;
         let alpha = -Infinity;
         let beta = Infinity;
+        this.p5.noLoop();
 
         // search through the available pawns
         for (const pawn of board.pawns) {
@@ -197,8 +212,19 @@ class CrossBoard {
         // initiate board move
         if (bestMove) {
             this.movePawn(board, bestMove);
-            // toggle player
+
+            // check for a winner
+            const winner = board.checkGameStatus(board);
+
+            if (winner !== undefined) {
+                board.state = this.state = STATE.PAUSED;
+                board.onResolve && board.onResolve(winner);
+                return;
+            }
+
+            // toggle player if noo winner
             board.currentPlayer = nextPlayer;
+            this.p5.loop();
         }
     }
 
@@ -212,11 +238,12 @@ class CrossBoard {
         status: string
     ): number {
         ++count;
-        const score = this.checkScore(board, lastPlayer);
+        const { score, hasWon } = this.checkScore(board, lastPlayer);
 
         const currentPlayer = lastPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
         // if (depth <= 0 || count > 100) return score;
-        if (depth <= 0) return score;
+        // if (depth <= 0) return score;
+        if (depth <= 0 || hasWon) return score * (depth + 1);
 
         if (isMaximizing) {
             let bestScore = -Infinity;

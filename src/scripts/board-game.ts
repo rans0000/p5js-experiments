@@ -6,13 +6,15 @@ import { Gamer, MOUSE_BTN } from 'src/utils/utils';
 /**--------------------------------- */
 // variables & types
 let board: CrossBoard;
+const scoreContainer = document.getElementById('score-card');
+const statusContainer = document.getElementById('status');
 
 /**--------------------------------- */
 // sketch
 const sketch = (p5: P5) => {
     const options = {
         size: 400,
-        showHelpers: false
+        showHelpers: true
     };
 
     const gui = new GUI({ autoPlace: false });
@@ -62,15 +64,17 @@ const sketch = (p5: P5) => {
         p5.background(200, 60, 10);
 
         //setup board
-        // board = new CrossBoard(p5, {
-        //     currentPlayer: Gamer.PLAYER,
-        //     size: options.size,
-        //     showHelpers: options.showHelpers
-        // });
-        board = new CrossBoard(p5, { currentPlayer: Gamer.PLAYER, showHelpers: options.showHelpers });
+        board = new CrossBoard(p5, { currentPlayer: Gamer.PLAYER, showHelpers: options.showHelpers, onResolve });
         board.currentPlayer === Gamer.PLAYER ? p5.loop() : p5.noLoop();
+    }
 
-        // console.log(board.points.map((p) => [p.pos.x, p.pos.y]));
+    function onResolve(winner: Gamer) {
+        const text = winner === Gamer.PLAYER ? 'You Win!!' : 'You Loose!!';
+        console.log(text);
+        alert('ok');
+
+        if (scoreContainer) scoreContainer.style.display = 'flex';
+        if (statusContainer) statusContainer.innerText = text;
     }
 
     /**--------------------------------- */
