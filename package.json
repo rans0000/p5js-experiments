@@ -6,7 +6,7 @@
     "author": "rans0000@gmail.com",
     "license": "ISC",
     "scripts": {
-        "start": "parcel src/*.html --public-url / --open",
+        "start": "rm -rf .parcel-cache && parcel src/*.html --public-url / --open",
         "build": "parcel build src/*.html --no-cache --public-url ./",
         "predeploy": "rm -rf dist && parcel build src/*.html --no-cache --public-url ./",
         "deploy": "gh-pages -d dist"

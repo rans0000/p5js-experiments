@@ -14,7 +14,7 @@ const statusContainer = document.getElementById('status');
 const sketch = (p5: P5) => {
     const options = {
         size: 400,
-        showHelpers: true
+        showHelpers: false
     };
 
     const gui = new GUI({ autoPlace: false });
