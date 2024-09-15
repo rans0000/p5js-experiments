@@ -65,6 +65,7 @@ class CrossBoard {
     cells: TCrossBoardCell[];
     pawns: Pawn[];
     currentPlayer: Gamer;
+    cachedMove: TBestMove;
 
     state: STATE;
     showHelpers: boolean;
@@ -112,12 +113,11 @@ class CrossBoard {
         count = 0;
         const board = this;
         const currentPlayer = this.currentPlayer;
-        const nextPlayer = currentPlayer === Gamer.AI ? Gamer.PLAYER : Gamer.AI;
         let bestScore = -Infinity;
         let bestMove: TBestMove = null;
         let alpha = -Infinity;
         let beta = Infinity;
-        this.p5.noLoop();
+        // this.p5.noLoop();
 
         // search through the available pawns
         for (const pawn of board.pawns) {
@@ -209,22 +209,13 @@ class CrossBoard {
                 }
             }
         }
+
         // initiate board move
-        if (bestMove) {
-            this.movePawn(board, bestMove);
-
-            // check for a winner
-            const winner = board.checkGameStatus(board);
-
-            if (winner !== undefined) {
-                board.state = this.state = STATE.PAUSED;
-                board.onResolve && board.onResolve(winner);
-                return;
-            }
-
-            // toggle player if noo winner
-            board.currentPlayer = nextPlayer;
-            this.p5.loop();
+        const pawn = board.pawns.find((p) => p.id === bestMove?.pawnId);
+        if (pawn && bestMove?.targetCellIndex !== undefined) {
+            this.cachedMove = bestMove;
+            board.state = pawn.state = STATE.ANIMATION;
+            pawn.targetCell = bestMove.targetCellIndex;
         }
     }
 
@@ -498,7 +489,7 @@ class CrossBoard {
                 this.p5.strokeWeight(1);
                 this.p5.noFill();
                 this.p5.text(
-                    `${this.cells[i].id}  ${this.cells[i].pawn !== null ? this.cells[i].pawn?.id : ''}`,
+                    `${this.cells[i].id}/  ${this.cells[i].pawn !== null ? this.cells[i].pawn?.id : ''}`,
                     posX + 25,
                     posY - 5
                 );
@@ -647,7 +638,7 @@ class Pawn {
             );
             const distance = targetPos.copy().sub(this.pos).mag();
 
-            // if near a cell, snap to it
+            // if near the target cell, snap to it
             if (distance < SNAP_RADIUS) {
                 board.state = this.state = STATE.NORMAL;
                 this.pos.set(targetPos.x, targetPos.y);
@@ -678,6 +669,23 @@ class Pawn {
                         // if there is no winner
                         board.currentPlayer = Gamer.AI;
                         board.nextMove();
+                    }
+
+                    // AI move confirm
+                    if (board.currentPlayer === Gamer.AI) {
+                        board.movePawn(board, board.cachedMove);
+
+                        // check for winner
+                        const winner = board.checkGameStatus(board);
+                        if (winner !== undefined) {
+                            board.state = this.state = STATE.PAUSED;
+                            board.onResolve && board.onResolve(winner);
+                            return this;
+                        }
+
+                        // if there is no winner, continue
+                        board.state = this.state = STATE.NORMAL;
+                        board.currentPlayer = Gamer.PLAYER;
                     }
                 }
                 return this;

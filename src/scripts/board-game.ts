@@ -54,15 +54,6 @@ const sketch = (p5: P5) => {
         board?.update(p5.deltaTime).draw();
     };
 
-    p5.mouseClicked = (e: MouseEvent) => {
-        if (e.button !== MOUSE_BTN.LEFT) return;
-        // console.log(board);
-
-        // p5.background(200, 60, 10);
-        // board.nextMove(board);
-        // board.update(1).draw();
-    };
-
     /**--------------------------------- */
     // functions
 
