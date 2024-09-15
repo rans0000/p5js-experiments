@@ -2,9 +2,7 @@ import P5 from 'p5';
 import { Gamer } from 'src/utils/utils';
 
 // --------------------------------------------------------
-const OFFSET = new P5.Vector(150, 150);
 const PAWN_RADIUS = 30;
-const DIMENSION = 100;
 const SNAP_RADIUS = 30;
 const MAX_DEPTH = 5;
 let count = 0;
@@ -18,9 +16,11 @@ type TCrossBoard = {
 
     state: STATE;
     showHelpers: boolean;
+    offset: P5.Vector;
+    size: number;
     onResolve?: (status: Gamer) => void;
 };
-type TCrossBoardConfig = Pick<TCrossBoard, 'currentPlayer' | 'showHelpers' | 'onResolve'>;
+type TCrossBoardConfig = Pick<TCrossBoard, 'currentPlayer' | 'showHelpers' | 'onResolve' | 'offset' | 'size'>;
 
 type TCrossBoardCell = {
     id: number;
@@ -48,7 +48,7 @@ type TBestMove = {
     bestScore: number;
 } | null;
 
-type Keys = 'showHelpers';
+type Keys = 'showHelpers' | 'offset' | 'size';
 
 enum STATE {
     NORMAL,
@@ -69,10 +69,18 @@ class CrossBoard {
 
     state: STATE;
     showHelpers: boolean;
+    offset: P5.Vector;
+    size: number;
     onResolve?: (status: Gamer) => void;
 
     constructor(p5: P5, _config?: Partial<TCrossBoardConfig>) {
-        const config: TCrossBoardConfig = { showHelpers: false, currentPlayer: Gamer.PLAYER, ..._config };
+        const config: TCrossBoardConfig = {
+            showHelpers: false,
+            currentPlayer: Gamer.PLAYER,
+            offset: p5.createVector(150, 150),
+            size: 100,
+            ..._config
+        };
         this.p5 = p5;
         this.currentPlayer = config.currentPlayer;
         this.pawns = buildPawns(p5, this);
@@ -80,6 +88,8 @@ class CrossBoard {
 
         this.state = STATE.NORMAL;
         this.showHelpers = config.showHelpers;
+        this.offset = config.offset;
+        this.size = config.size;
         this.onResolve = config.onResolve;
     }
 
@@ -458,7 +468,7 @@ class CrossBoard {
             const pawn = this.pawns[i];
             const cell = this.cells[pawn.cellIndex];
             // pawn.update(this.p5.deltaTime, OFFSET.x + cell.pos.x * DIMENSION, OFFSET.y + cell.pos.y * DIMENSION);
-            pawn.update(deltaTime, OFFSET.x, OFFSET.y);
+            pawn.update(deltaTime, this.offset.x, this.offset.y);
         }
         return this;
     }
@@ -469,8 +479,8 @@ class CrossBoard {
 
         for (let i = 0; i < this.cells.length; i++) {
             const { x: x1, y: y1 } = this.cells[i].pos;
-            const posX = OFFSET.x + x1 * DIMENSION;
-            const posY = OFFSET.y + y1 * DIMENSION;
+            const posX = this.offset.x + x1 * this.size;
+            const posY = this.offset.y + y1 * this.size;
             const currentCellPos = this.p5.createVector(posX, posY);
 
             // draw lines to neighbours
@@ -479,7 +489,7 @@ class CrossBoard {
                 const { x: x2, y: y2 } = this.cells[index].pos;
                 this.p5.strokeWeight(2);
                 this.p5.stroke(255, 0.1);
-                this.p5.line(posX, posY, OFFSET.x + x2 * DIMENSION, OFFSET.y + y2 * DIMENSION);
+                this.p5.line(posX, posY, this.offset.x + x2 * this.size, this.offset.y + y2 * this.size);
             });
 
             // draw helpers
@@ -517,24 +527,50 @@ class CrossBoard {
         }
     }
 
-    setValues(key: Keys, value: boolean) {
-        switch (key) {
-            case 'showHelpers':
-                this.showHelpers = value;
-                break;
-            default:
-                throw 'Unsupported key passed to setValues()';
+    setValues(key: Keys, value: boolean | number | P5.Vector) {
+        if (typeof value === 'boolean') {
+            switch (key) {
+                case 'showHelpers':
+                    this.showHelpers = value;
+                    break;
+                default:
+                    throw 'Unsupported key passed to setValues()';
+            }
+        } else if (typeof value === 'number') {
+            switch (key) {
+                case 'size':
+                    this.size = value;
+                    break;
+                default:
+                    throw 'Unsupported key passed to setValues()';
+            }
+        } else if (value instanceof P5.Vector) {
+            switch (key) {
+                case 'offset':
+                    this.offset = value;
+                    break;
+                default:
+                    throw 'Unsupported key passed to setValues()';
+            }
         }
     }
 
     resetGame(_config?: Partial<TCrossBoardConfig>) {
-        const config: TCrossBoardConfig = { showHelpers: false, currentPlayer: Gamer.PLAYER, ..._config };
+        const config: TCrossBoardConfig = {
+            showHelpers: false,
+            currentPlayer: Gamer.PLAYER,
+            offset: this.p5.createVector(150, 150),
+            size: 100,
+            ..._config
+        };
         this.currentPlayer = config.currentPlayer;
         this.pawns = buildPawns(this.p5, this);
         this.cells = buildBoard(this.p5, this.pawns);
 
         this.state = STATE.NORMAL;
         this.showHelpers = config.showHelpers;
+        this.offset = config.offset;
+        this.size = config.size;
         this.onResolve = config.onResolve;
     }
 }
@@ -566,8 +602,8 @@ class Pawn {
         const board = this.board;
         const cells = this.board.cells;
         const parentPos = this.p5.createVector(
-            offsetX + cells[this.cellIndex].pos.x * DIMENSION,
-            offsetY + cells[this.cellIndex].pos.y * DIMENSION
+            offsetX + cells[this.cellIndex].pos.x * board.size,
+            offsetY + cells[this.cellIndex].pos.y * board.size
         );
         const mousePos = this.p5.createVector(this.p5.mouseX, this.p5.mouseY);
 
@@ -610,8 +646,8 @@ class Pawn {
                 const currentCell = cells[i];
 
                 const pos = this.p5.createVector(
-                    offsetX + currentCell.pos.x * DIMENSION,
-                    offsetY + currentCell.pos.y * DIMENSION
+                    offsetX + currentCell.pos.x * board.size,
+                    offsetY + currentCell.pos.y * board.size
                 );
                 const distance = pos.copy().sub(this.pos).mag();
                 if (distance < SNAP_RADIUS) {
@@ -633,8 +669,8 @@ class Pawn {
         // travel to position
         if (this.state === STATE.ANIMATION) {
             const targetPos = this.p5.createVector(
-                offsetX + cells[this.targetCell].pos.x * DIMENSION,
-                offsetY + cells[this.targetCell].pos.y * DIMENSION
+                offsetX + cells[this.targetCell].pos.x * board.size,
+                offsetY + cells[this.targetCell].pos.y * board.size
             );
             const distance = targetPos.copy().sub(this.pos).mag();
 
