@@ -9,6 +9,7 @@ class AutonomousAgent {
     p5: P5;
     pos: P5.Vector;
     mass: number;
+    cachedVelocity: P5.Vector;
     velocity: P5.Vector;
     acceleration: P5.Vector;
     maxSpeed: number;
@@ -28,6 +29,7 @@ class AutonomousAgent {
             pos: p5.createVector(0, 0),
             mass: 1,
             velocity: p5.createVector(0, 0),
+            cachedVelocity: p5.createVector(0, 0),
             acceleration: p5.createVector(0, 0),
             maxSpeed: 15,
             maxForce: 0.25,
@@ -109,8 +111,13 @@ class AutonomousAgent {
     }
 
     update() {
-        this.velocity.add(this.acceleration.limit(this.maxForce));
-        this.velocity.limit(this.maxSpeed);
+        this.cachedVelocity = this.velocity.copy().add(this.acceleration.limit(this.maxForce));
+        this.cachedVelocity.limit(this.maxSpeed);
+        return this;
+    }
+
+    move() {
+        this.velocity.set(this.cachedVelocity.x, this.cachedVelocity.y);
         this.pos.add(this.velocity);
         this.wrapOnScreenEdge && this.constraintWithinWindow(this.pos.x, this.pos.y);
         this.acceleration.set(0, 0);

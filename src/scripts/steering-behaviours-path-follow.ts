@@ -98,6 +98,10 @@ const sketch = (p5: P5) => {
             const force = agents[i].pathFollow(path, true);
             agents[i].applyForces(force).update().draw();
         }
+
+        for (const agent of agents) {
+            agent.move();
+        }
     }
 
     /**--------------------------------- */

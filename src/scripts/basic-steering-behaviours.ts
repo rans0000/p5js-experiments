@@ -85,6 +85,9 @@ const sketch = (p5: P5) => {
             default:
                 break;
         }
+        for (const agent of agents) {
+            agent.move();
+        }
     };
 
     p5.mouseClicked = (e: MouseEvent) => {

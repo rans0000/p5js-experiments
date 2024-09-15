@@ -36,6 +36,7 @@ export type TAutonomousAgentConfig = {
     pos: P5.Vector;
     mass: number;
     velocity: P5.Vector;
+    cachedVelocity: P5.Vector;
     acceleration: P5.Vector;
     maxSpeed: number;
     maxForce: number;

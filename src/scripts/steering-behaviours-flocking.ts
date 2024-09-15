@@ -121,6 +121,10 @@ const sketch = (p5: P5) => {
                 .update()
                 .draw();
         }
+
+        for (const agent of agents) {
+            agent.move();
+        }
     }
 
     /**--------------------------------- */
