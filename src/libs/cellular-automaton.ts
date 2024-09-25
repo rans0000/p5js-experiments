@@ -11,6 +11,7 @@ type TCell = {
     pos: Vector;
     size: number;
     health: number;
+    prevState: number;
     maxHealth: number;
 };
 class CA {
@@ -51,17 +52,46 @@ class CA {
         }
     }
 
-    updateTile(index: number, health?: number) {
-        this.tiles[index].setHealth(health);
+    updateTile(index: number, health: number = Tile.maxHealth) {
+        this.tiles[index].cacheState(health);
+    }
+
+    calculateState() {
+        const [survivalThresold, deathThreshold, maxLife, isMoore] = this.rule.split('/').map((e) => parseInt(e, 10));
+        for (let x = 0; x < this.horizontalTiles; x++) {
+            for (let y = 0; y < this.verticalTiles; y++) {
+                let filled = 0;
+                let empty = 0;
+                for (let i = x - 1; i < x + 2; i++) {
+                    for (let j = y - 1; j < y + 2; j++) {
+                        if (i === x && j === y) continue;
+                        if (i === -1 || j === -1) continue;
+                        if (i > this.horizontalTiles - 1 || j > this.verticalTiles - 1) continue;
+                        const index = i * this.horizontalTiles + j;
+                        i * this.horizontalTiles + j;
+                        this.tiles[index].health ? ++filled : ++empty;
+                    }
+                }
+                const index = x * this.horizontalTiles + y;
+                if (filled === survivalThresold) {
+                    this.tiles[index].cacheState(maxLife);
+                } else if (filled >= deathThreshold || filled === 8) {
+                    this.tiles[index].cacheState(0);
+                }
+                // console.log(`(${x}, ${y})`, filled, empty);
+            }
+        }
     }
 
     update(deltaTime: number): this {
+        for (const tile of this.tiles) {
+            tile.update(deltaTime);
+        }
         return this;
     }
     draw(): this {
         for (let i = 0; i < this.horizontalTiles * this.verticalTiles; i++) {
             this.tiles[i].draw();
-            console.log(i);
         }
         return this;
     }
@@ -72,22 +102,29 @@ class Tile {
     index: number;
     pos: Vector;
     size: number;
-    health: number = 0;
+    health: number;
+    prevState: number;
     static maxHealth: number;
 
-    constructor(p5: P5, config: Omit<TCell, 'health'>) {
+    constructor(p5: P5, config: Omit<TCell, 'health' | 'prevState'>) {
         this.p5 = p5;
         this.index = config.index;
         Tile.maxHealth = config.maxHealth;
         this.pos = config.pos;
         this.size = config.size;
+        this.prevState = p5.random([0, 1]);
     }
 
     setHealth(health = Tile.maxHealth) {
         this.health = health;
     }
 
-    update(deltaTime: number): this {
+    cacheState(health: number) {
+        this.prevState = health;
+    }
+
+    update(_deltaTime: number): this {
+        this.health = this.prevState;
         return this;
     }
 
@@ -98,6 +135,7 @@ class Tile {
         this.p5.stroke(255, 0.1);
         this.p5.fill(255, this.health ? 1 : 0);
         this.p5.rect(0, 0, this.size);
+        // this.p5.text(this.health, 0, 0);
         this.p5.pop();
 
         return this;

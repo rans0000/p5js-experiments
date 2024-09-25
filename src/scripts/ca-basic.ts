@@ -36,12 +36,20 @@ const sketch = (p5: P5) => {
         p5.background(200, 60, 10);
 
         ca.update(p5.deltaTime).draw();
+
+        !isDragging && ca.calculateState();
     };
 
     p5.mousePressed = (event: MouseEvent) => {
         if (event.button === MOUSE_BTN.LEFT) {
             isDragging = true;
             p5.loop();
+            const { clientX, clientY } = event;
+            if (clientX > ca.horizontalTiles * ca.size && clientY > ca.verticalTiles) return;
+            const x = Math.floor(clientX / ca.size);
+            const y = Math.floor(clientY / ca.size);
+            const index = x + y * ca.horizontalTiles;
+            ca.updateTile(index);
         }
     };
 
@@ -50,15 +58,16 @@ const sketch = (p5: P5) => {
         const { clientX, clientY } = event;
         if (clientX > ca.horizontalTiles * ca.size && clientY > ca.verticalTiles) return;
         const x = Math.floor(clientX / ca.size);
-        const y = Math.floor(clientY / ca.size) * ca.horizontalTiles;
-        const index = x + y;
+        const y = Math.floor(clientY / ca.size);
+        const index = x + y * ca.horizontalTiles;
         ca.updateTile(index);
     };
 
     p5.mouseReleased = (event: MouseEvent) => {
         if (event.button === MOUSE_BTN.LEFT) {
             isDragging = false;
-            p5.noLoop();
+            ca.calculateState();
+            p5.loop();
         }
     };
 
@@ -72,7 +81,7 @@ const sketch = (p5: P5) => {
     function init(p5: P5) {
         p5.background(200, 60, 10);
         let { innerWidth, innerHeight } = window;
-        const size = 20;
+        const size = 10;
         ca = new CA(p5, {
             horizontalTiles: Math.floor(innerWidth / size),
             verticalTiles: Math.floor(innerHeight / size),
