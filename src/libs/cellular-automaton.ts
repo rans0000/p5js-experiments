@@ -42,7 +42,7 @@ class CA {
                     health: ruleset[2],
                     pos: p5.createVector(
                         (i % this.horizontalTiles) * this.size + this.size / 2,
-                        Math.floor(i / this.verticalTiles) * this.size + this.size / 2
+                        Math.floor(i / this.horizontalTiles) * this.size + this.size / 2
                     ),
                     size: this.size
                 })
@@ -88,6 +88,7 @@ class Tile {
         this.p5.fill(255, 0);
         this.p5.rect(0, 0, this.size);
         this.p5.pop();
+
         return this;
     }
 }

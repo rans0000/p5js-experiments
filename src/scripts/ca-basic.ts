@@ -46,11 +46,13 @@ const sketch = (p5: P5) => {
 
     function init(p5: P5) {
         p5.background(200, 60, 10);
-        const { innerWidth, innerHeight } = window;
-        const min = Math.min(innerWidth, innerHeight);
+        let { innerWidth, innerHeight } = window;
         const size = 10;
-        const dimension = Math.floor(min / size);
-        ca = new CA(p5, { horizontalTiles: dimension, verticalTiles: dimension, size });
+        ca = new CA(p5, {
+            horizontalTiles: Math.floor(innerWidth / size),
+            verticalTiles: Math.floor(innerHeight / size),
+            size
+        });
     }
 
     /**--------------------------------- */
