@@ -1,10 +1,13 @@
 import P5, { Vector } from 'p5';
 
+const MAX_NEIGHBOURS = 8;
+
 type TCAConfig = {
     horizontalTiles: number;
     verticalTiles: number;
     size: number;
     rule: string;
+    noiseScale: number;
 };
 type TCell = {
     index: number;
@@ -21,6 +24,7 @@ class CA {
     size: number;
     rule: string;
     tiles: Tile[][] = [];
+    noiseScale: number;
 
     constructor(p5: P5, _config?: Partial<TCAConfig>) {
         const config: TCAConfig = {
@@ -28,6 +32,7 @@ class CA {
             verticalTiles: 10,
             size: 50,
             rule: '4/5/1/1',
+            noiseScale: 0,
             ..._config
         };
         this.p5 = p5;
@@ -46,6 +51,8 @@ class CA {
                     new Tile(p5, {
                         index: j * this.horizontalTiles + i,
                         maxHealth: ruleset[2],
+                        prevState:
+                            config.noiseScale && Math.floor(p5.noise(i * config.noiseScale, j * config.noiseScale) * 2),
                         pos: p5.createVector(i * this.size + this.size / 2, j * this.size + this.size / 2),
                         size: this.size
                     })
@@ -79,7 +86,7 @@ class CA {
                 }
                 if (filled === survivalThresold) {
                     this.tiles[x][y].cacheState(maxLife);
-                } else if (filled >= deathThreshold || filled === 8) {
+                } else if (filled >= deathThreshold || filled === MAX_NEIGHBOURS) {
                     this.tiles[x][y].cacheState(0);
                 }
             }
@@ -113,13 +120,13 @@ class Tile {
     prevState: number;
     static maxHealth: number;
 
-    constructor(p5: P5, config: Omit<TCell, 'health' | 'prevState'>) {
+    constructor(p5: P5, config: Omit<TCell, 'health'>) {
         this.p5 = p5;
         this.index = config.index;
         Tile.maxHealth = config.maxHealth;
         this.pos = config.pos;
         this.size = config.size;
-        this.prevState = p5.random([0, 1]);
+        this.prevState = config.prevState;
     }
 
     setHealth(health = Tile.maxHealth) {
@@ -142,7 +149,6 @@ class Tile {
         this.p5.stroke(255, 0.1);
         this.p5.fill(255, this.health ? 1 : 0);
         this.p5.rect(0, 0, this.size);
-        // this.p5.text(this.index, 0, 0);
         this.p5.pop();
 
         return this;

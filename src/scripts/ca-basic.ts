@@ -7,6 +7,13 @@ import { MOUSE_BTN } from 'src/utils/utils';
 // variables & types
 let ca: CA;
 let isDragging = false;
+/**@todo:
+ * mooreNeighbourhood
+ * gui options (size, restart)
+ * edit rule
+ * delete tile
+ * tile death
+ */
 /**--------------------------------- */
 // sketch
 const sketch = (p5: P5) => {
@@ -83,6 +90,7 @@ const sketch = (p5: P5) => {
         ca = new CA(p5, {
             horizontalTiles: Math.floor(innerWidth / size),
             verticalTiles: Math.floor(innerHeight / size),
+            noiseScale: 0.5,
             size
         });
     }
