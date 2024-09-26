@@ -48,8 +48,7 @@ const sketch = (p5: P5) => {
             if (clientX > ca.horizontalTiles * ca.size && clientY > ca.verticalTiles) return;
             const x = Math.floor(clientX / ca.size);
             const y = Math.floor(clientY / ca.size);
-            const index = x + y * ca.horizontalTiles;
-            ca.updateTile(index);
+            ca.updateTile(x, y);
         }
     };
 
@@ -59,8 +58,7 @@ const sketch = (p5: P5) => {
         if (clientX > ca.horizontalTiles * ca.size && clientY > ca.verticalTiles) return;
         const x = Math.floor(clientX / ca.size);
         const y = Math.floor(clientY / ca.size);
-        const index = x + y * ca.horizontalTiles;
-        ca.updateTile(index);
+        ca.updateTile(x, y);
     };
 
     p5.mouseReleased = (event: MouseEvent) => {
@@ -81,7 +79,7 @@ const sketch = (p5: P5) => {
     function init(p5: P5) {
         p5.background(200, 60, 10);
         let { innerWidth, innerHeight } = window;
-        const size = 10;
+        const size = 20;
         ca = new CA(p5, {
             horizontalTiles: Math.floor(innerWidth / size),
             verticalTiles: Math.floor(innerHeight / size),

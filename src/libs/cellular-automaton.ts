@@ -20,14 +20,14 @@ class CA {
     verticalTiles: number;
     size: number;
     rule: string;
-    tiles: Tile[] = [];
+    tiles: Tile[][] = [];
 
     constructor(p5: P5, _config?: Partial<TCAConfig>) {
         const config: TCAConfig = {
             horizontalTiles: 10,
             verticalTiles: 10,
             size: 50,
-            rule: '3/4/1/1',
+            rule: '4/5/1/1',
             ..._config
         };
         this.p5 = p5;
@@ -36,62 +36,74 @@ class CA {
         this.size = config.size;
         this.rule = config.rule;
 
+        this.tiles = [];
         const ruleset = this.rule.split('/').map((e) => parseInt(e, 10));
+
         for (let i = 0; i < this.horizontalTiles * this.verticalTiles; i++) {
-            this.tiles.push(
-                new Tile(p5, {
-                    index: i,
-                    maxHealth: ruleset[2],
-                    pos: p5.createVector(
-                        (i % this.horizontalTiles) * this.size + this.size / 2,
-                        Math.floor(i / this.horizontalTiles) * this.size + this.size / 2
-                    ),
-                    size: this.size
-                })
-            );
+            this.tiles.push([]);
+            for (let j = 0; j < this.verticalTiles; j++) {
+                this.tiles[i].push(
+                    new Tile(p5, {
+                        index: j * this.horizontalTiles + i,
+                        maxHealth: ruleset[2],
+                        pos: p5.createVector(i * this.size + this.size / 2, j * this.size + this.size / 2),
+                        size: this.size
+                    })
+                );
+            }
         }
     }
 
-    updateTile(index: number, health: number = Tile.maxHealth) {
-        this.tiles[index].cacheState(health);
+    updateTile(x: number, y: number, health: number = Tile.maxHealth) {
+        this.tiles[x][y].cacheState(health);
     }
 
     calculateState() {
+        this.p5.noLoop();
+        console.log(this.horizontalTiles, this.verticalTiles);
+
         const [survivalThresold, deathThreshold, maxLife, isMoore] = this.rule.split('/').map((e) => parseInt(e, 10));
         for (let x = 0; x < this.horizontalTiles; x++) {
             for (let y = 0; y < this.verticalTiles; y++) {
                 let filled = 0;
                 let empty = 0;
-                for (let i = x - 1; i < x + 2; i++) {
-                    for (let j = y - 1; j < y + 2; j++) {
-                        if (i === x && j === y) continue;
-                        if (i === -1 || j === -1) continue;
-                        if (i > this.horizontalTiles - 1 || j > this.verticalTiles - 1) continue;
-                        const index = i * this.horizontalTiles + j;
-                        i * this.horizontalTiles + j;
-                        this.tiles[index].health ? ++filled : ++empty;
+                let neighbours = 0;
+                for (let i = -1; i < 2; i++) {
+                    for (let j = -1; j < 2; j++) {
+                        const x1 = x + i;
+                        const y1 = y + j;
+                        if (i == 0 && j == 0) continue;
+                        if (x1 < 0 || x1 >= this.horizontalTiles) continue;
+                        if (y1 < 0 || y1 >= this.verticalTiles) continue;
+
+                        ++neighbours;
+                        this.tiles[x1][y1].health ? ++filled : ++empty;
+                        console.log(this.tiles[x][y].index, this.tiles[x1][y1].index);
                     }
                 }
-                const index = x * this.horizontalTiles + y;
                 if (filled === survivalThresold) {
-                    this.tiles[index].cacheState(maxLife);
+                    this.tiles[x][y].cacheState(maxLife);
                 } else if (filled >= deathThreshold || filled === 8) {
-                    this.tiles[index].cacheState(0);
+                    this.tiles[x][y].cacheState(0);
                 }
-                // console.log(`(${x}, ${y})`, filled, empty);
             }
         }
+        this.p5.loop();
     }
 
     update(deltaTime: number): this {
-        for (const tile of this.tiles) {
-            tile.update(deltaTime);
+        for (let i = 0; i < this.horizontalTiles; i++) {
+            for (let j = 0; j < this.verticalTiles; j++) {
+                this.tiles[i][j].update(deltaTime);
+            }
         }
         return this;
     }
     draw(): this {
-        for (let i = 0; i < this.horizontalTiles * this.verticalTiles; i++) {
-            this.tiles[i].draw();
+        for (let i = 0; i < this.horizontalTiles; i++) {
+            for (let j = 0; j < this.verticalTiles; j++) {
+                this.tiles[i][j].draw();
+            }
         }
         return this;
     }
@@ -135,7 +147,7 @@ class Tile {
         this.p5.stroke(255, 0.1);
         this.p5.fill(255, this.health ? 1 : 0);
         this.p5.rect(0, 0, this.size);
-        // this.p5.text(this.health, 0, 0);
+        // this.p5.text(this.index, 0, 0);
         this.p5.pop();
 
         return this;
