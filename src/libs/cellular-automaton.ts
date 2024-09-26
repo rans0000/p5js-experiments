@@ -59,9 +59,6 @@ class CA {
     }
 
     calculateState() {
-        this.p5.noLoop();
-        console.log(this.horizontalTiles, this.verticalTiles);
-
         const [survivalThresold, deathThreshold, maxLife, isMoore] = this.rule.split('/').map((e) => parseInt(e, 10));
         for (let x = 0; x < this.horizontalTiles; x++) {
             for (let y = 0; y < this.verticalTiles; y++) {
@@ -78,7 +75,6 @@ class CA {
 
                         ++neighbours;
                         this.tiles[x1][y1].health ? ++filled : ++empty;
-                        console.log(this.tiles[x][y].index, this.tiles[x1][y1].index);
                     }
                 }
                 if (filled === survivalThresold) {
@@ -88,7 +84,6 @@ class CA {
                 }
             }
         }
-        this.p5.loop();
     }
 
     update(deltaTime: number): this {

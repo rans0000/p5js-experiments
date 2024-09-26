@@ -28,7 +28,7 @@ const sketch = (p5: P5) => {
         window.addEventListener('resize', () => resizeDisplay(p5));
 
         init(p5);
-        p5.noLoop();
+        // p5.noLoop();
     };
 
     /** draw */
