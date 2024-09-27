@@ -7,23 +7,20 @@ import { MOUSE_BTN } from 'src/utils/utils';
 // variables & types
 let ca: CA;
 let isDragging = false;
-/**@todo:
- * mooreNeighbourhood
- * gui options (size, restart)
- * edit rule
- * delete tile
- * tile death
- */
+
 /**--------------------------------- */
 // sketch
 const sketch = (p5: P5) => {
     const options = {
-        showHelpers: false
+        restart: () => {
+            init(p5);
+        }
     };
 
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
+    gui.add(options, 'restart').name('Restart');
 
     /** setup */
     p5.setup = () => {
