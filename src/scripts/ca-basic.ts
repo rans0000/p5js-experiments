@@ -12,15 +12,19 @@ let isDragging = false;
 // sketch
 const sketch = (p5: P5) => {
     const options = {
-        restart: () => {
-            init(p5);
-        }
+        survivalThresold: 4,
+        deathThreshold: 5,
+        maxHealth: 1,
+        restart: restart
     };
 
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
-    gui.add(options, 'restart').name('Restart');
+    gui.add(options, 'restart').name('Restart').onChange(restart);
+    gui.add(options, 'survivalThresold', 0, 8, 1).name('Survival Thresold').onChange(restart);
+    gui.add(options, 'deathThreshold', 0, 8, 1).name('Death Threshold').onChange(restart);
+    // gui.add(options, 'maxHealth', 1, 10, 1).name('Max Life').onChange(restart);
 
     /** setup */
     p5.setup = () => {
@@ -88,8 +92,15 @@ const sketch = (p5: P5) => {
             horizontalTiles: Math.floor(innerWidth / size),
             verticalTiles: Math.floor(innerHeight / size),
             noiseScale: 0.5,
+            survivalThresold: options.survivalThresold,
+            deathThreshold: options.deathThreshold,
+            maxHealth: options.maxHealth,
             size
         });
+    }
+
+    function restart() {
+        init(p5);
     }
 
     /**--------------------------------- */

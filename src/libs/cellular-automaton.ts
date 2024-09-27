@@ -1,13 +1,13 @@
 import P5, { Vector } from 'p5';
 
-const MAX_NEIGHBOURS = 8;
-
 type TCAConfig = {
     horizontalTiles: number;
     verticalTiles: number;
     size: number;
-    rule: string;
     noiseScale: number;
+    survivalThresold: number;
+    deathThreshold: number;
+    maxHealth: number;
 };
 type TCell = {
     index: number;
@@ -22,27 +22,32 @@ class CA {
     horizontalTiles: number;
     verticalTiles: number;
     size: number;
-    rule: string;
     tiles: Tile[][] = [];
     noiseScale: number;
+    survivalThresold: number;
+    deathThreshold: number;
+    maxHealth: number;
 
     constructor(p5: P5, _config?: Partial<TCAConfig>) {
         const config: TCAConfig = {
             horizontalTiles: 10,
             verticalTiles: 10,
             size: 50,
-            rule: '4/5/1/1',
             noiseScale: 0,
+            survivalThresold: 4,
+            deathThreshold: 5,
+            maxHealth: 1,
             ..._config
         };
         this.p5 = p5;
         this.horizontalTiles = config.horizontalTiles;
         this.verticalTiles = config.verticalTiles;
         this.size = config.size;
-        this.rule = config.rule;
+        this.survivalThresold = config.survivalThresold;
+        this.deathThreshold = config.deathThreshold;
+        this.maxHealth = config.maxHealth;
 
         this.tiles = [];
-        const ruleset = this.rule.split('/').map((e) => parseInt(e, 10));
 
         for (let i = 0; i < this.horizontalTiles * this.verticalTiles; i++) {
             this.tiles.push([]);
@@ -50,7 +55,7 @@ class CA {
                 this.tiles[i].push(
                     new Tile(p5, {
                         index: j * this.horizontalTiles + i,
-                        maxHealth: ruleset[2],
+                        maxHealth: this.maxHealth,
                         prevState:
                             config.noiseScale && Math.floor(p5.noise(i * config.noiseScale, j * config.noiseScale) * 2),
                         pos: p5.createVector(i * this.size + this.size / 2, j * this.size + this.size / 2),
@@ -66,7 +71,6 @@ class CA {
     }
 
     calculateState() {
-        const [survivalThresold, deathThreshold, maxLife, isMoore] = this.rule.split('/').map((e) => parseInt(e, 10));
         for (let x = 0; x < this.horizontalTiles; x++) {
             for (let y = 0; y < this.verticalTiles; y++) {
                 let filled = 0;
@@ -84,9 +88,9 @@ class CA {
                         this.tiles[x1][y1].health ? ++filled : ++empty;
                     }
                 }
-                if (filled === survivalThresold) {
-                    this.tiles[x][y].cacheState(maxLife);
-                } else if (filled >= deathThreshold || filled === MAX_NEIGHBOURS) {
+                if (filled === this.survivalThresold) {
+                    this.tiles[x][y].cacheState(this.maxHealth);
+                } else if (filled >= this.deathThreshold) {
                     this.tiles[x][y].cacheState(0);
                 }
             }
