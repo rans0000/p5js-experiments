@@ -3,13 +3,15 @@ import P5 from 'p5';
 type TFractalTree = {
     initialVocab: string;
     vocab: string;
-    grammar: Record<string, string>;
     branchLength: number;
+    branchLengthDelta: number;
     branchAngle: number;
+    branchAngleDelta: number;
     leafRadius: number;
+    iterations: number;
     showHelpers: boolean;
 };
-type TFractalTreeConfig = Omit<TFractalTree, 'grammar' | 'vocab'> & { rule: string };
+type TFractalTreeConfig = Omit<TFractalTree, 'grammar' | 'vocab'>;
 
 type Keys = 'size' | 'showHelpers';
 
@@ -18,54 +20,66 @@ class FractalTree {
     rule: string;
     initialVocab: string;
     vocab: string;
-    grammar: Record<string, string>;
     branchLength: number;
+    branchLengthDelta: number;
     branchAngle: number;
+    branchAngleDelta: number;
     leafRadius: number;
+    iterations: number;
     showHelpers: boolean;
 
     constructor(p5: P5, _config?: Partial<TFractalTreeConfig>) {
         const config: TFractalTreeConfig = {
             initialVocab: 'S',
-            rule: 'S:FB F:FF B:[lFB][rFB]',
             branchLength: 20,
+            branchLengthDelta: 5,
             branchAngle: Math.PI / 4,
+            branchAngleDelta: Math.PI / 12,
             leafRadius: 3,
+            iterations: 7,
             showHelpers: false,
             ..._config
         };
         this.p5 = p5;
-        this.vocab = config.initialVocab;
         this.initialVocab = config.initialVocab;
-        this.grammar = this.generateGrammar(config.rule);
         this.branchLength = config.branchLength;
+        this.branchLengthDelta = config.branchLengthDelta;
         this.branchAngle = config.branchAngle;
+        this.branchAngleDelta = config.branchAngleDelta;
         this.leafRadius = config.leafRadius;
+        this.iterations = config.iterations;
         this.showHelpers = config.showHelpers;
+        this.vocab = this.generateVocab();
     }
 
-    private generateGrammar(rule: string): Record<string, string> {
-        let obj: Record<string, string> = {};
-        rule.split(' ').map((elem) => {
-            const item = elem.split(':');
-            obj[item[0]] = item[1];
-        });
-        return obj;
-    }
-
-    generateVocab(iterations: number = 6): string {
+    generateVocab(iterations?: number): string {
         let str = '';
+        this.iterations = iterations || this.iterations;
         let vocab = this.initialVocab;
 
-        for (let i = 0; i < iterations; i++) {
+        for (let i = 0; i < this.iterations; i++) {
             str = '';
-
+            const chance = Math.random();
             for (const letter of vocab) {
-                str += this.grammar.hasOwnProperty(letter) ? this.grammar[letter] : letter;
+                switch (letter) {
+                    case 'S':
+                        str += 'FB';
+                        break;
+                    case 'F':
+                        str += chance > 0.5 ? 'FF' : 'F';
+                        break;
+                    case 'B':
+                        str += chance < 0.25 ? '[llFB][rFB]' : chance < 0.5 ? '[lFB][rrFB]' : '[lFB][rFB]';
+                        break;
+                    default:
+                        str += letter;
+                        break;
+                }
             }
             vocab = str;
         }
-        return (this.vocab = vocab);
+
+        return vocab;
     }
 
     setValues(key: Keys, value: number | boolean) {
@@ -86,7 +100,7 @@ class FractalTree {
         }
     }
 
-    update(deltaTime: number): this {
+    update(_deltaTime: number): this {
         return this;
     }
 
