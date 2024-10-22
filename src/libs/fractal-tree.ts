@@ -80,7 +80,7 @@ class FractalTree {
             vocab = str;
         }
 
-        return vocab;
+        return (this.vocab = vocab);
     }
 
     generateBranchVocab(chance: number): string {

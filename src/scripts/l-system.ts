@@ -10,6 +10,7 @@ let tree: FractalTree;
 const sketch = (p5: P5) => {
     const options = {
         generate: () => init(p5),
+        animate: true,
         iterations: 7,
         leafRadius: 5,
         branchLength: 15,
@@ -21,7 +22,12 @@ const sketch = (p5: P5) => {
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
-    gui.add(options, 'generate').name('Generate tree');
+    gui.add(options, 'generate')
+        .name('Generate tree')
+        .onChange(() => {});
+    gui.add(options, 'animate')
+        .name('Animate')
+        .onChange((val) => (val ? p5.loop() : p5.noLoop()));
     gui.add(options, 'iterations', 1, 12, 1).onChange(() => init(p5));
     gui.add(options, 'leafRadius', 1, 8, 1).onChange(() => init(p5));
     gui.add(options, 'branchLength', 1, 20, 1).onChange(() => init(p5));
@@ -36,6 +42,7 @@ const sketch = (p5: P5) => {
         p5.background('white');
         p5.pixelDensity(1);
         p5.colorMode(p5.HSB);
+        p5.frameRate(1);
         window.addEventListener('resize', () => resizeDisplay(p5));
 
         //
@@ -46,6 +53,7 @@ const sketch = (p5: P5) => {
     p5.draw = () => {
         p5.background(200, 60, 10);
         p5.translate(window.innerWidth / 2, window.innerHeight - 100);
+        tree.generateVocab();
         tree.update(p5.deltaTime).draw();
     };
 
@@ -66,6 +74,7 @@ const sketch = (p5: P5) => {
             branchAngle: options.branchAngle,
             branchAngleDelta: options.branchAngleDelta
         });
+        p5.redraw();
     }
 
     /**--------------------------------- */
