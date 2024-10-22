@@ -69,7 +69,8 @@ class FractalTree {
                         str += chance > 0.5 ? 'FF' : 'F';
                         break;
                     case 'B':
-                        str += chance < 0.25 ? '[llFB][rFB]' : chance < 0.5 ? '[lFB][rrFB]' : '[lFB][rFB]';
+                        // str += chance < 0.25 ? '[llFB][rFB]' : chance < 0.5 ? '[lFB][rrFB]' : '[lFB][rFB]';
+                        str += this.generateBranchVocab(chance);
                         break;
                     default:
                         str += letter;
@@ -80,6 +81,14 @@ class FractalTree {
         }
 
         return vocab;
+    }
+
+    generateBranchVocab(chance: number): string {
+        if (chance < 0.05) return '[lFB]';
+        if (chance < 0.1) return '[rFB]';
+        if (chance < 0.3) return '[llFB][rFB]';
+        if (chance < 0.5) return '[lFB][rrFB]';
+        return '[lFB][rFB]';
     }
 
     setValues(key: Keys, value: number | boolean) {
