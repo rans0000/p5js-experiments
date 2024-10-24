@@ -38,12 +38,17 @@ const sketch = (p5: P5) => {
         p5.rectMode(p5.CENTER);
         p5.stroke(128, 255, 255);
         p5.rect(selection.pos.x, selection.pos.y, selection.width, selection.height);
+        const points = qtree.query(selection);
+
+        for (const point of points) {
+            p5.stroke(0, 255, 255);
+            p5.circle(point.x, point.y, 2);
+        }
     };
 
     p5.mouseReleased = (e: MouseEvent) => {
         if (e.button !== MOUSE_BTN.LEFT) return;
         qtree.insert({ x: e.clientX, y: e.clientY });
-        console.log(qtree);
     };
 
     /**--------------------------------- */
@@ -63,7 +68,7 @@ const sketch = (p5: P5) => {
         selection = new Quad(p5, { x: 0, y: 0 }, 100, 100);
 
         // draw points
-        for (let i = 0; i < 500; i++) {
+        for (let i = 0; i < 400; i++) {
             const pos = {
                 x: p5.randomGaussian(innerWidth / 2, 100),
                 y: p5.randomGaussian(innerHeight / 2, 100)

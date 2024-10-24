@@ -81,6 +81,22 @@ class QuadTree {
         return false;
     }
 
+    query(range: Quad, found: TPoint[] = []): TPoint[] {
+        if (!this.quad.isIntersects(range)) return [];
+
+        for (const point of this.items) {
+            if (range.isWithinBounds(point)) {
+                found.push(point);
+            }
+        }
+
+        for (const quad of this.subdivisions) {
+            quad.query(range, found);
+        }
+
+        return found;
+    }
+
     draw(): this {
         this.quad.draw();
         for (const quad of this.subdivisions) {
@@ -112,6 +128,18 @@ export class Quad {
         const w = this.width / 2;
         const h = this.height / 2;
         return point.y <= y + h && point.x <= x + w && point.y > y - h && point.x > x - w;
+    }
+
+    isIntersects(range: Quad): boolean {
+        const { x, y } = this.pos;
+        const w = this.width / 2;
+        const h = this.height / 2;
+        return !(
+            range.pos.y - range.height / 2 > y + h ||
+            range.pos.x - range.width / 2 > x + w ||
+            range.pos.y + range.height / 2 < y - h ||
+            range.pos.x + range.width / 2 < x - w
+        );
     }
 
     draw(): this {
