@@ -1,10 +1,11 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
-import QuadTree from 'src/libs/quad-tree';
+import QuadTree, { Quad } from 'src/libs/quad-tree';
 import { MOUSE_BTN } from 'src/utils/utils';
 
 /**--------------------------------- */
 let qtree: QuadTree;
+let selection: Quad;
 
 /**--------------------------------- */
 // sketch
@@ -32,6 +33,11 @@ const sketch = (p5: P5) => {
     p5.draw = () => {
         p5.background(200, 60, 10);
         qtree.draw();
+
+        selection.pos = { x: p5.mouseX, y: p5.mouseY };
+        p5.rectMode(p5.CENTER);
+        p5.stroke(128, 255, 255);
+        p5.rect(selection.pos.x, selection.pos.y, selection.width, selection.height);
     };
 
     p5.mouseReleased = (e: MouseEvent) => {
@@ -54,11 +60,13 @@ const sketch = (p5: P5) => {
         const pos = p5.createVector(innerWidth / 2, innerHeight / 2);
         qtree = new QuadTree(p5, { pos, capacity: 4, width: size, height: size });
 
+        selection = new Quad(p5, { x: 0, y: 0 }, 100, 100);
+
         // draw points
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 500; i++) {
             const pos = {
-                x: p5.random(size) + (innerWidth / 2 - size / 2),
-                y: p5.random(size) + (innerHeight / 2 - size / 2)
+                x: p5.randomGaussian(innerWidth / 2, 100),
+                y: p5.randomGaussian(innerHeight / 2, 100)
             };
             qtree.insert(pos);
         }

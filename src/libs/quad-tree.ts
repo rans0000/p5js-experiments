@@ -64,17 +64,21 @@ class QuadTree {
         this.subdivisions = [ne, nw, se, sw];
     }
 
-    insert(item: TPoint) {
-        if (!this.quad.isWithinBounds(item)) return;
+    insert(item: TPoint): boolean {
+        if (!this.quad.isWithinBounds(item)) return false;
 
         if (this.items.length < this.capacity) {
             this.items.push(item);
-            return;
+            return true;
         }
         if (!this.subdivisions.length) {
             this.subdivide();
         }
-        this.subdivisions.map((quad) => quad.insert(item));
+        for (let i = 0; i < this.subdivisions.length; i++) {
+            const isDivided = this.subdivisions[i].insert(item);
+            if (isDivided) return true;
+        }
+        return false;
     }
 
     draw(): this {
@@ -90,7 +94,7 @@ class QuadTree {
     }
 }
 
-class Quad {
+export class Quad {
     p5: P5;
     pos: TPoint;
     width: number;
