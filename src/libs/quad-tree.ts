@@ -18,6 +18,7 @@ class QuadTree {
     subdivisions: QuadTree[];
     capacity: number;
     items: TPoint[];
+    static count: number;
 
     constructor(p5: P5, config: TQuadTreeConfig) {
         this.p5 = p5;
@@ -82,12 +83,11 @@ class QuadTree {
     }
 
     query(range: Quad, found: TPoint[] = []): TPoint[] {
+        QuadTree.count++;
         if (!this.quad.isIntersects(range)) return [];
 
         for (const point of this.items) {
-            if (range.isWithinBounds(point)) {
-                found.push(point);
-            }
+            if (range.isWithinBounds(point)) found.push(point);
         }
 
         for (const quad of this.subdivisions) {
