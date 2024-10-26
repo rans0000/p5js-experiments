@@ -1,9 +1,12 @@
 import { GUI } from 'dat.gui';
-import { Engine, Render, Runner, Bodies, Composite } from 'matter-js';
+import { Bodies, Composite, Engine } from 'matter-js';
 import P5 from 'p5';
+import CarromBoard from 'src/libs/carrom-board';
 
 /**--------------------------------- */
-var engine = Engine.create();
+let engine: Engine;
+let carromBoard: CarromBoard;
+let entities: any = [];
 /**--------------------------------- */
 // sketch
 const sketch = (p5: P5) => {
@@ -17,6 +20,7 @@ const sketch = (p5: P5) => {
     /** setup */
     p5.setup = () => {
         const canvas = p5.createCanvas(window.innerWidth, window.innerHeight);
+        engine = Engine.create();
         canvas.parent('app');
         p5.background('white');
         p5.pixelDensity(1);
@@ -30,6 +34,14 @@ const sketch = (p5: P5) => {
     /** draw */
     p5.draw = () => {
         p5.background(200, 60, 10);
+        Engine.update(engine);
+        for (const entity of entities) {
+            p5.push();
+            p5.rectMode(p5.CENTER);
+            p5.stroke(255);
+            p5.rect(entity.position.x, entity.position.y, 50, 50);
+            p5.pop();
+        }
     };
 
     /**--------------------------------- */
@@ -41,6 +53,10 @@ const sketch = (p5: P5) => {
 
     function init(p5: P5) {
         p5.background(200, 60, 10);
+        const box = Bodies.rectangle(100, 100, 50, 50);
+        const ground = Bodies.rectangle(200, 300, 400, 10, { isStatic: true });
+        entities = [box, ground];
+        Composite.add(engine.world, entities);
     }
 
     /**--------------------------------- */
