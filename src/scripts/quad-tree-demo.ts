@@ -14,7 +14,8 @@ const sketch = (p5: P5) => {
         clear: () => qtree.clear(),
         populate: () => {
             init(p5);
-        }
+        },
+        selectionSize: 100
     };
 
     const gui = new GUI({ autoPlace: false });
@@ -22,6 +23,9 @@ const sketch = (p5: P5) => {
     document.getElementById('gui')?.appendChild(gui.domElement);
     gui.add(options, 'clear').name('Clear tree');
     gui.add(options, 'populate').name('Populte  tree');
+    gui.add(options, 'selectionSize', 50, 200, 1)
+        .name('Populte  tree')
+        .onChange((val) => (selection.width = selection.height = val));
 
     /** setup */
     p5.setup = () => {
