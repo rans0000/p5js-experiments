@@ -10,11 +10,18 @@ const TOTAL = 1000;
 /**--------------------------------- */
 // sketch
 const sketch = (p5: P5) => {
-    const options = {};
+    const options = {
+        clear: () => qtree.clear(),
+        populate: () => {
+            init(p5);
+        }
+    };
 
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
+    gui.add(options, 'clear').name('Clear tree');
+    gui.add(options, 'populate').name('Populte  tree');
 
     /** setup */
     p5.setup = () => {

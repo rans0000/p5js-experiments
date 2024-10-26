@@ -108,6 +108,11 @@ class QuadTree {
         }
         return this;
     }
+
+    clear() {
+        this.items = [];
+        this.subdivisions = [];
+    }
 }
 
 export class Quad {
