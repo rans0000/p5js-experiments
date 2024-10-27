@@ -6,15 +6,10 @@ import CarromBoard from 'src/libs/carrom-board';
 /**--------------------------------- */
 let engine: Engine;
 let carromBoard: CarromBoard;
+const borderWidth = 50;
 /**--------------------------------- */
 // sketch
 const sketch = (p5: P5) => {
-    const options = {};
-
-    const gui = new GUI({ autoPlace: false });
-    gui.domElement.id = 'gui';
-    document.getElementById('gui')?.appendChild(gui.domElement);
-
     /** setup */
     p5.setup = () => {
         const canvas = p5.createCanvas(window.innerWidth, window.innerHeight);
@@ -46,8 +41,8 @@ const sketch = (p5: P5) => {
     function init(p5: P5) {
         p5.background(200, 60, 10);
 
-        const size = Math.min(window.innerWidth, window.innerHeight);
-        carromBoard = new CarromBoard(p5, { size, parent: engine.world, type: 'carrorm' });
+        const size = Math.min(window.innerWidth - borderWidth, window.innerHeight - borderWidth);
+        carromBoard = new CarromBoard(p5, { size, borderWidth, parent: engine.world, type: 'carrorm' });
     }
 
     /**--------------------------------- */
