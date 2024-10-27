@@ -1,4 +1,5 @@
-import P5, { Color } from 'p5';
+import { Body, Composite } from 'matter-js';
+import P5 from 'p5';
 
 export enum TEntityType {
     ENTITY,
@@ -8,6 +9,12 @@ export enum TEntityType {
 export type TEntity = {
     pos?: P5.Vector;
     r?: number;
+};
+
+export type TPhysicsEntityConfig = {
+    type: string;
+    body?: Body;
+    parent: Composite;
 };
 
 export type TParticle = TEntity & {

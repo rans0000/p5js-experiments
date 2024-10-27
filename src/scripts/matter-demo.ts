@@ -1,16 +1,14 @@
 import { GUI } from 'dat.gui';
-import { Bodies, Composite, Engine } from 'matter-js';
+import { Engine } from 'matter-js';
 import P5 from 'p5';
 import CarromBoard from 'src/libs/carrom-board';
 
 /**--------------------------------- */
 let engine: Engine;
 let carromBoard: CarromBoard;
-let entities: any = [];
 /**--------------------------------- */
 // sketch
 const sketch = (p5: P5) => {
-    Engine;
     const options = {};
 
     const gui = new GUI({ autoPlace: false });
@@ -35,13 +33,7 @@ const sketch = (p5: P5) => {
     p5.draw = () => {
         p5.background(200, 60, 10);
         Engine.update(engine);
-        for (const entity of entities) {
-            p5.push();
-            p5.rectMode(p5.CENTER);
-            p5.stroke(255);
-            p5.rect(entity.position.x, entity.position.y, 50, 50);
-            p5.pop();
-        }
+        carromBoard.draw();
     };
 
     /**--------------------------------- */
@@ -53,10 +45,9 @@ const sketch = (p5: P5) => {
 
     function init(p5: P5) {
         p5.background(200, 60, 10);
-        const box = Bodies.rectangle(100, 100, 50, 50);
-        const ground = Bodies.rectangle(200, 300, 400, 10, { isStatic: true });
-        entities = [box, ground];
-        Composite.add(engine.world, entities);
+
+        const size = Math.min(window.innerWidth, window.innerHeight);
+        carromBoard = new CarromBoard(p5, { size, parent: engine.world, type: 'carrorm' });
     }
 
     /**--------------------------------- */
