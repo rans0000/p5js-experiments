@@ -13,7 +13,7 @@ const sketch = (p5: P5) => {
     /** setup */
     p5.setup = () => {
         const canvas = p5.createCanvas(window.innerWidth, window.innerHeight);
-        engine = Engine.create();
+        engine = Engine.create({ gravity: { x: 0, y: 0 } });
         canvas.parent('app');
         p5.background('white');
         p5.pixelDensity(1);

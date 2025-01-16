@@ -1,23 +1,13 @@
-import { Bodies, Composite, IBodyDefinition } from 'matter-js';
+import { Composite } from 'matter-js';
 import P5 from 'p5';
 import { TPhysicsEntityConfig } from 'src/utils/types';
-import PhysicsEntity from './physics-entity';
+import CaromCoin from './carrom-coin';
+import CaromWall from './carrom-wall';
 
 type TCarromBoardConfig = {
     size: number;
     borderWidth: number;
 } & Omit<TPhysicsEntityConfig, 'body'>;
-
-const COIN_CONFIG: IBodyDefinition = {
-    friction: 0.1,
-    restitution: 1
-};
-
-const WAL_CONFIG: IBodyDefinition = {
-    friction: 0.1,
-    restitution: 1,
-    isStatic: true
-};
 
 class CarromBoard {
     p5: P5;
@@ -105,50 +95,6 @@ class CarromBoard {
         for (const elem of this.elements) {
             elem.draw();
         }
-        return this;
-    }
-}
-
-class CaromCoin extends PhysicsEntity {
-    radius: number;
-
-    constructor(p5: P5, config: { x: number; y: number } & TPhysicsEntityConfig) {
-        super(p5, config);
-        this.radius = 15;
-        this.body = Bodies.circle(config.x, config.y, this.radius, COIN_CONFIG);
-    }
-
-    draw(): this {
-        this.p5.push();
-        this.p5.noStroke();
-        this.p5.fill(255);
-        this.p5.translate(this.body.position.x, this.body.position.y);
-        this.p5.circle(0, 0, this.radius * 2);
-        this.p5.rotate(this.body.angle);
-        this.p5.pop();
-        return this;
-    }
-}
-
-class CaromWall extends PhysicsEntity {
-    width: number;
-    height: number;
-
-    constructor(p5: P5, config: { x: number; y: number; width: number; height: number } & TPhysicsEntityConfig) {
-        super(p5, config);
-        this.width = config.width;
-        this.height = config.height;
-        this.body = Bodies.rectangle(config.x, config.y, this.width, this.height, WAL_CONFIG);
-    }
-
-    draw(): this {
-        this.p5.push();
-        this.p5.stroke(128);
-        this.p5.translate(this.body.position.x, this.body.position.y);
-        this.p5.rectMode(this.p5.CENTER);
-        this.p5.rect(0, 0, this.width, this.height);
-        this.p5.rotate(this.body.angle);
-        this.p5.pop();
         return this;
     }
 }
