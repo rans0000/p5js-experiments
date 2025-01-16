@@ -16,7 +16,8 @@ class CaromWall extends PhysicsEntity {
 
     draw(): this {
         this.p5.push();
-        this.p5.stroke(128);
+        this.p5.noStroke();
+        this.p5.fill(80);
         this.p5.translate(this.body.position.x, this.body.position.y);
         this.p5.rectMode(this.p5.CENTER);
         this.p5.rect(0, 0, this.width, this.height);

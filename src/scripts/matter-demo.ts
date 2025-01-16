@@ -19,7 +19,7 @@ const sketch = (p5: P5) => {
         p5.pixelDensity(1);
         p5.colorMode(p5.HSB);
         window.addEventListener('resize', () => resizeDisplay(p5));
-
+        p5.noLoop();
         //
         init(p5);
     };
@@ -41,7 +41,7 @@ const sketch = (p5: P5) => {
     function init(p5: P5) {
         p5.background(200, 60, 10);
 
-        const size = Math.min(window.innerWidth - borderWidth, window.innerHeight - borderWidth);
+        const size = Math.min(window.innerWidth - borderWidth * 2, window.innerHeight - borderWidth * 2);
         carromBoard = new CarromBoard(p5, { size, borderWidth, parent: engine.world, type: 'carrorm' });
     }
 

@@ -45,13 +45,24 @@ class CarromBoard {
         this.elements.push(tWall);
         tWall.addToScene();
 
+        const eWall = new CaromWall(this.p5, {
+            type: 'carrom/all',
+            parent: this.parent,
+            width: this.borderWidth,
+            height: this.size,
+            x: this.size + this.borderWidth / 2,
+            y: this.size / 2
+        });
+        this.elements.push(eWall);
+        eWall.addToScene();
+
         const sWall = new CaromWall(this.p5, {
             type: 'carrom/all',
             parent: this.parent,
             width: this.size,
             height: this.borderWidth,
             x: this.size / 2,
-            y: this.size - this.borderWidth
+            y: this.size - this.borderWidth / 2
         });
         this.elements.push(sWall);
         sWall.addToScene();
@@ -60,23 +71,12 @@ class CarromBoard {
             type: 'carrom/all',
             parent: this.parent,
             width: this.borderWidth,
-            height: this.size,
+            height: this.size - this.borderWidth * 2,
             x: this.borderWidth / 2,
-            y: this.size / 2 + this.borderWidth
+            y: this.size / 2
         });
         this.elements.push(wWall);
         wWall.addToScene();
-
-        const ZWall = new CaromWall(this.p5, {
-            type: 'carrom/all',
-            parent: this.parent,
-            width: this.borderWidth,
-            height: this.size,
-            x: this.size + this.borderWidth / 2,
-            y: this.size / 2 - this.borderWidth / 2
-        });
-        this.elements.push(ZWall);
-        ZWall.addToScene();
     }
 
     buildCoins() {
