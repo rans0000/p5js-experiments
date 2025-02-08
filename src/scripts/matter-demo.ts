@@ -1,4 +1,3 @@
-import { GUI } from 'dat.gui';
 import { Engine } from 'matter-js';
 import P5 from 'p5';
 import CarromBoard from 'src/libs/carrom-board';

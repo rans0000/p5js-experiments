@@ -1,4 +1,4 @@
-import { Composite } from 'matter-js';
+import { Body, Composite } from 'matter-js';
 import P5 from 'p5';
 import { TPhysicsEntityConfig } from 'src/utils/types';
 import CaromCoin from './carrom-coin';
@@ -12,14 +12,16 @@ type TCarromBoardConfig = {
 class CarromBoard {
     p5: P5;
     parent: Composite;
-    elements: (CaromCoin | CaromWall)[];
+    coins: CaromCoin[];
+    walls: CaromWall[];
     size: number;
     borderWidth: number;
 
     constructor(p5: P5, config: TCarromBoardConfig) {
         this.p5 = p5;
         this.parent = config.parent;
-        this.elements = [];
+        this.coins = [];
+        this.walls = [];
         this.size = config.size;
         this.borderWidth = config.borderWidth;
 
@@ -29,6 +31,7 @@ class CarromBoard {
     setup() {
         this.buildWalls();
         this.buildCoins();
+        this.initiateGame();
     }
 
     buildWalls() {
@@ -42,7 +45,7 @@ class CarromBoard {
             x: this.size / 2,
             y: this.borderWidth / 2
         });
-        this.elements.push(tWall);
+        this.walls.push(tWall);
         tWall.addToScene();
 
         const eWall = new CaromWall(this.p5, {
@@ -53,7 +56,7 @@ class CarromBoard {
             x: this.size + this.borderWidth / 2,
             y: this.size / 2
         });
-        this.elements.push(eWall);
+        this.walls.push(eWall);
         eWall.addToScene();
 
         const sWall = new CaromWall(this.p5, {
@@ -64,7 +67,7 @@ class CarromBoard {
             x: this.size / 2,
             y: this.size - this.borderWidth / 2
         });
-        this.elements.push(sWall);
+        this.walls.push(sWall);
         sWall.addToScene();
 
         const wWall = new CaromWall(this.p5, {
@@ -75,7 +78,7 @@ class CarromBoard {
             x: this.borderWidth / 2,
             y: this.size / 2
         });
-        this.elements.push(wWall);
+        this.walls.push(wWall);
         wWall.addToScene();
     }
 
@@ -84,7 +87,13 @@ class CarromBoard {
         for (let i = 0; i < 1; i++) {
             const coin = new CaromCoin(this.p5, { x: (i + 1) * 100, y: 100, type: '', parent: this.parent });
             coin.addToScene();
-            this.elements.push(coin);
+            this.coins.push(coin);
+        }
+    }
+
+    initiateGame() {
+        for (const coin of this.coins) {
+            Body.applyForce(coin.body, coin.body.position, { x: 0, y: 0.2 });
         }
     }
 
@@ -92,9 +101,9 @@ class CarromBoard {
         return this;
     }
     draw(): this {
-        for (const elem of this.elements) {
-            elem.draw();
-        }
+        for (const elem of this.walls) elem.draw();
+        for (const elem of this.coins) elem.draw();
+
         return this;
     }
 }

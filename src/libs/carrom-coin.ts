@@ -25,7 +25,7 @@ class CaromCoin extends PhysicsEntity {
 }
 
 const COIN_CONFIG: IBodyDefinition = {
-    friction: 0.1,
+    friction: 0.0,
     restitution: 1
 };
 
