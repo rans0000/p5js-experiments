@@ -24,6 +24,7 @@
         "prettier": "^3.2.4"
     },
     "dependencies": {
+        "@dimforge/rapier2d-compat": "^0.14.0",
         "@types/matter-js": "^0.19.7",
         "dat.gui": "^0.7.9",
         "gh-pages": "^6.1.1",
