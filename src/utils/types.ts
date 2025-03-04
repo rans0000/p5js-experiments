@@ -71,3 +71,33 @@ export type TInteractivePathConfig = {
 };
 
 export type TPoints = P5.Vector[];
+
+export type TSketch = {
+    p5: P5;
+    update: (deltatime: number) => void;
+    draw: () => void;
+};
+
+export type TTile = {
+    x: number;
+    y: number;
+    gird: TTileGrid;
+} & TSketch;
+
+export type TTileConfig = {
+    x: number;
+    y: number;
+    grid: TTileGrid;
+};
+
+export type TTileGrid = {
+    size: number;
+    width: number;
+    tiles: TTile[];
+    createTiles: () => void;
+} & TSketch;
+
+export type TTileGridConfig = {
+    size: number;
+    width: number;
+};
