@@ -9,7 +9,8 @@ const Tile = function (this: TTile, p5: P5, config: TTileConfig) {
 
     this.update = (_deltatime: number) => {};
     this.draw = () => {
-        this.p5.rect(this.x * this.gird.size, this.y * this.gird.size, this.gird.size, this.gird.size);
+        const dim = this.gird.width / this.gird.size;
+        this.p5.rect(this.x * dim, this.y * dim, dim, dim);
     };
 } as unknown as { new (p5: P5, config: TTileConfig): TTile };
 export default Tile;

@@ -56,8 +56,7 @@ const sketch = (p5: P5) => {
 
     function init(p5: P5) {
         p5.background(200, 60, 10);
-        const width = 400;
-        grid = new TileGrid(p5, { width, size: Math.floor(width / 20) });
+        grid = new TileGrid(p5, { width: 360, size: 10 });
     }
 
     /**--------------------------------- */
