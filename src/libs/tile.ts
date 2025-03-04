@@ -6,11 +6,16 @@ const Tile = function (this: TTile, p5: P5, config: TTileConfig) {
     this.x = config.x;
     this.y = config.y;
     this.gird = config.grid;
+    this.isCurrent = false;
 
-    this.update = (_deltatime: number) => {};
+    this.update = (_deltatime: number) => {
+        return this;
+    };
+
     this.draw = () => {
         const dim = this.gird.width / this.gird.size;
         this.p5.rect(this.x * dim, this.y * dim, dim, dim);
+        return this;
     };
 } as unknown as { new (p5: P5, config: TTileConfig): TTile };
 export default Tile;

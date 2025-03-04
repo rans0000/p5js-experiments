@@ -1,12 +1,27 @@
 import P5 from 'p5';
-import { TTileGrid, TTileGridConfig } from 'src/utils/types';
+import { TMazeSolvers, TTileGrid, TTileGridConfig } from 'src/utils/types';
 import Tile from './tile';
+import { DFSNonRecursive, Kruskal } from './maze-strategies';
 
-const TileGrid = function (this: TTileGrid, p5: P5, _config: TTileGridConfig) {
+const TileGrid = function (this: TTileGrid, p5: P5, config: TTileGridConfig) {
     this.p5 = p5;
-    this.size = _config.size;
-    this.width = _config.width;
+    this.size = config.size;
+    this.width = config.width;
     this.tiles = [];
+
+    this.update = (_deltatime: number) => {
+        this.strategy.solve();
+        return this;
+    };
+
+    this.draw = () => {
+        for (let y = 0; y < this.size; y++) {
+            for (let x = 0; x < this.size; x++) {
+                this.tiles[x + y * this.size].draw();
+            }
+        }
+        return this;
+    };
 
     this.createTiles = () => {
         for (let y = 0; y < this.size; y++) {
@@ -16,16 +31,25 @@ const TileGrid = function (this: TTileGrid, p5: P5, _config: TTileGridConfig) {
         }
     };
 
-    this.update = (_deltatime: number) => {};
-    this.draw = () => {
-        for (let y = 0; y < this.size; y++) {
-            for (let x = 0; x < this.size; x++) {
-                this.tiles[x + y * this.size].draw();
-            }
+    this.setStrategy = (solver: TMazeSolvers) => {
+        switch (solver) {
+            case 'DFS_Recursive':
+                this.strategy = new DFSNonRecursive(this);
+                break;
+            case 'Kruskal':
+                this.strategy = new Kruskal(this);
+                break;
+            default:
+                break;
         }
     };
 
-    this.createTiles();
+    this.init = (config) => {
+        this.createTiles();
+        this.setStrategy(config.solver);
+    };
+
+    this.init(config);
 } as unknown as { new (p5: P5, config: TTileGridConfig): TTileGrid };
 
 export default TileGrid;

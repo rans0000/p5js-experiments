@@ -44,7 +44,7 @@ const sketch = (p5: P5) => {
     /** draw */
     p5.draw = () => {
         p5.background(200, 60, 10);
-        grid.draw();
+        grid.update(p5.deltaTime).draw();
     };
 
     /**--------------------------------- */
@@ -56,7 +56,7 @@ const sketch = (p5: P5) => {
 
     function init(p5: P5) {
         p5.background(200, 60, 10);
-        grid = new TileGrid(p5, { width: 360, size: 10 });
+        grid = new TileGrid(p5, { width: 360, size: 10, solver: 'DFS_Recursive' });
     }
 
     /**--------------------------------- */
