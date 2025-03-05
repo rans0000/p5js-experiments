@@ -1,55 +1,63 @@
 import P5 from 'p5';
-import { TMazeSolvers, TTileGrid, TTileGridConfig } from 'src/utils/types';
+import { TMazeSolvers, TMazeStrategy, TTile, TTileGrid, TTileGridConfig } from 'src/utils/types';
 import Tile from './tile';
 import { DFSNonRecursive, Kruskal } from './maze-strategies';
 
-const TileGrid = function (this: TTileGrid, p5: P5, config: TTileGridConfig) {
-    this.p5 = p5;
-    this.size = config.size;
-    this.width = config.width;
-    this.tiles = [];
+const TileGrid = function (this: TTileGrid, config: TTileGridConfig) {
+    this.p5 = config.p5;
+    const _size = config.size;
+    const _width = config.width;
+    const _tiles: TTile[] = [];
+    let _strategy: TMazeStrategy;
 
     this.update = (_deltatime: number) => {
-        this.strategy.solve();
+        _strategy.solve();
         return this;
     };
 
     this.draw = () => {
-        for (let y = 0; y < this.size; y++) {
-            for (let x = 0; x < this.size; x++) {
-                this.tiles[x + y * this.size].draw();
+        for (let y = 0; y < _size; y++) {
+            for (let x = 0; x < _size; x++) {
+                _tiles[x + y * _size].draw();
             }
         }
         return this;
     };
 
-    this.createTiles = () => {
-        for (let y = 0; y < this.size; y++) {
-            for (let x = 0; x < this.size; x++) {
-                this.tiles.push(new Tile(this.p5, { x, y, grid: this }));
+    this.getWidth = () => {
+        return _width;
+    };
+
+    this.getSize = () => {
+        return _size;
+    };
+
+    const createTiles = () => {
+        for (let y = 0; y < _size; y++) {
+            for (let x = 0; x < _size; x++) {
+                _tiles.push(new Tile({ p5: this.p5, x, y, grid: this }));
             }
         }
     };
 
     this.setStrategy = (solver: TMazeSolvers) => {
         switch (solver) {
-            case 'DFS_Recursive':
-                this.strategy = new DFSNonRecursive(this);
-                break;
             case 'Kruskal':
-                this.strategy = new Kruskal(this);
+                _strategy = new Kruskal(this);
                 break;
+            case 'DFS_Recursive':
             default:
+                _strategy = new DFSNonRecursive(this);
                 break;
         }
     };
 
-    this.init = (config) => {
-        this.createTiles();
+    const init = (config: TTileGridConfig) => {
         this.setStrategy(config.solver);
+        createTiles();
     };
 
-    this.init(config);
-} as unknown as { new (p5: P5, config: TTileGridConfig): TTileGrid };
+    init(config);
+} as unknown as { new (config: TTileGridConfig): TTileGrid };
 
 export default TileGrid;

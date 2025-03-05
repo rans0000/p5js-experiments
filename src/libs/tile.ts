@@ -1,21 +1,43 @@
-import P5 from 'p5';
 import { TTile, TTileConfig } from 'src/utils/types';
 
-const Tile = function (this: TTile, p5: P5, config: TTileConfig) {
-    this.p5 = p5;
-    this.x = config.x;
-    this.y = config.y;
-    this.gird = config.grid;
-    this.isCurrent = false;
+const Tile = function (this: TTile, config: TTileConfig) {
+    this.p5 = config.p5;
+    const _x = config.x;
+    const _y = config.y;
+    const _gird = config.grid;
+    const _isCurrent = false;
+    const _walls: [boolean, boolean, boolean, boolean] = [true, true, true, true];
 
-    this.update = (_deltatime: number) => {
+    this.update = () => {
         return this;
     };
 
     this.draw = () => {
-        const dim = this.gird.width / this.gird.size;
-        this.p5.rect(this.x * dim, this.y * dim, dim, dim);
+        const dim = _gird.getWidth() / _gird.getSize();
+        // this.p5.rect(_x * dim, _y * dim, dim, dim);
+
+        drawWalls();
         return this;
     };
-} as unknown as { new (p5: P5, config: TTileConfig): TTile };
+
+    const drawWalls = () => {
+        const dim = _gird.getWidth() / _gird.getSize();
+
+        this.p5.noFill();
+        this.p5.stroke(255);
+        this.p5.push();
+        this.p5.translate(_x * dim, _y * dim);
+
+        // top wall
+        _walls[0] && this.p5.line(0, 0, dim, 0);
+        // right wall
+        _walls[1] && this.p5.line(dim, 0, dim, dim);
+        // bottom wall
+        _walls[2] && this.p5.line(0, dim, dim, dim);
+        // left wall
+        _walls[3] && this.p5.line(0, 0, 0, dim);
+        //
+        this.p5.pop();
+    };
+} as unknown as { new (config: TTileConfig): TTile };
 export default Tile;

@@ -74,18 +74,17 @@ export type TPoints = P5.Vector[];
 
 export type TSketch = {
     p5: P5;
-    update: (deltatime: number) => TSketch;
+    update: (deltatime?: number) => TSketch;
     draw: () => TSketch;
 };
 
 export type TTile = {
-    x: number;
-    y: number;
     isCurrent: boolean;
     gird: TTileGrid;
 } & TSketch;
 
 export type TTileConfig = {
+    p5: P5;
     x: number;
     y: number;
     grid: TTileGrid;
@@ -94,23 +93,19 @@ export type TTileConfig = {
 export type TMazeSolvers = 'DFS_Recursive' | 'Kruskal';
 
 export type TTileGrid = {
-    size: number;
-    width: number;
-    tiles: TTile[];
-    strategy: TMazeStrategy;
-    init: (config: TTileGridConfig) => void;
-    createTiles: () => void;
+    getWidth: () => number;
+    getSize: () => number;
     setStrategy: (solver: TMazeSolvers) => void;
 } & TSketch;
 
 export type TTileGridConfig = {
+    p5: P5;
     size: number;
     width: number;
     solver: TMazeSolvers;
 };
 
 export type TMazeStrategy = {
-    grid: TTileGrid;
     solve: () => void;
 };
 
