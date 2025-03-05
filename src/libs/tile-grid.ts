@@ -1,7 +1,6 @@
-import P5 from 'p5';
 import { TMazeSolvers, TMazeStrategy, TTile, TTileGrid, TTileGridConfig } from 'src/utils/types';
+import { DFSNonRecursive } from './maze-strategies';
 import Tile from './tile';
-import { DFSNonRecursive, Kruskal } from './maze-strategies';
 
 const TileGrid = function (this: TTileGrid, config: TTileGridConfig) {
     this.p5 = config.p5;
@@ -32,6 +31,10 @@ const TileGrid = function (this: TTileGrid, config: TTileGridConfig) {
         return _size;
     };
 
+    this.getTiles = () => {
+        return _tiles;
+    };
+
     const createTiles = () => {
         for (let y = 0; y < _size; y++) {
             for (let x = 0; x < _size; x++) {
@@ -42,9 +45,9 @@ const TileGrid = function (this: TTileGrid, config: TTileGridConfig) {
 
     this.setStrategy = (solver: TMazeSolvers) => {
         switch (solver) {
-            case 'Kruskal':
-                _strategy = new Kruskal(this);
-                break;
+            // case 'Kruskal':
+            //     _strategy = new Kruskal(this);
+            //     break;
             case 'DFS_Recursive':
             default:
                 _strategy = new DFSNonRecursive(this);
@@ -53,8 +56,8 @@ const TileGrid = function (this: TTileGrid, config: TTileGridConfig) {
     };
 
     const init = (config: TTileGridConfig) => {
-        this.setStrategy(config.solver);
         createTiles();
+        this.setStrategy(config.solver);
     };
 
     init(config);

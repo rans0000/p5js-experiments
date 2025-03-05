@@ -81,6 +81,7 @@ export type TSketch = {
 export type TTile = {
     isCurrent: boolean;
     gird: TTileGrid;
+    setter: (action: TTileSetter) => void;
 } & TSketch;
 
 export type TTileConfig = {
@@ -91,10 +92,12 @@ export type TTileConfig = {
 };
 
 export type TMazeSolvers = 'DFS_Recursive' | 'Kruskal';
+export type TTileSetter = { type: 'VISITED'; payload: boolean } | { type: 'CURRENT'; payload: boolean };
 
 export type TTileGrid = {
     getWidth: () => number;
     getSize: () => number;
+    getTiles: () => TTile[];
     setStrategy: (solver: TMazeSolvers) => void;
 } & TSketch;
 
