@@ -1,6 +1,7 @@
 import P5 from 'p5';
 import TileGrid from 'src/libs/tile-grid';
 import { TTileGrid } from 'src/utils/types';
+import { MOUSE_BTN } from 'src/utils/utils';
 
 /**--------------------------------- */
 // variables & types
@@ -35,6 +36,8 @@ const sketch = (p5: P5) => {
         p5.background('white');
         p5.pixelDensity(1);
         p5.colorMode(p5.HSB);
+        // p5.noLoop();
+        // p5.frameRate(5);
         window.addEventListener('resize', () => resizeDisplay(p5));
 
         //
@@ -43,12 +46,22 @@ const sketch = (p5: P5) => {
 
     /** draw */
     p5.draw = () => {
-        p5.background(200, 60, 10);
-        grid.update(p5.deltaTime).draw();
+        draw();
+    };
+
+    p5.mousePressed = (event: MouseEvent) => {
+        if (event.button === MOUSE_BTN.MIDDLE) {
+            p5.draw();
+        }
     };
 
     /**--------------------------------- */
     // functions
+
+    function draw() {
+        p5.background(200, 60, 10);
+        grid.update(p5.deltaTime).draw();
+    }
 
     function resizeDisplay(canvas: P5) {
         canvas.resizeCanvas(window.innerWidth, window.innerHeight);
