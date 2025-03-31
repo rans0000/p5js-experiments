@@ -89,7 +89,7 @@ export type TTile = {
     getter: TTileGetter;
     setter: (action: TTileSetter) => void;
     getPosition: () => { _x: number; _y: number };
-    setWallStaus: (walls: number[], stats: boolean[]) => void;
+    setWallStaus: (ndex: number, state: boolean) => void;
 } & TSketch;
 
 export type TTileConfig = {
@@ -121,7 +121,7 @@ export type TMazeConfig = {
 };
 
 export type TMazeStrategy = {
-    solve: () => void;
+    solve: () => boolean;
 };
 
 export type TMazeStrategyConstructor = new (grid: TMaze) => TMazeStrategy;

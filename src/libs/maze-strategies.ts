@@ -2,31 +2,35 @@ import { TMaze, TMazeStrategy, TMazeStrategyConstructor, TTile } from 'src/utils
 
 const DFSNonRecursive: TMazeStrategyConstructor = function (this: TMazeStrategy, grid: TMaze) {
     const _grid = grid;
-    let current: TTile = _grid.getTiles()[0];
-    let next: TTile;
+    let _current: TTile;
+    let _next: TTile;
+    let _stack: TTile[] = [_grid.getTiles()[0]];
 
     this.solve = () => {
-        current.setter({ type: 'VISITED', payload: true });
-        current.setter({ type: 'CURRENT', payload: true });
-        const neighbours = _grid.getNeighbours(current);
+        if (_stack.length <= 0) return true;
+
+        _current = _stack.pop() as TTile;
+        _current.setter({ type: 'VISITED', payload: true });
+        _current.setter({ type: 'CURRENT', payload: false });
+
+        const neighbours = _grid.getNeighbours(_current);
 
         if (neighbours.length > 0) {
+            // 2.1
+            _stack.push(_current);
+            // 2.2
             const pick = Math.floor(Math.random() * neighbours.length);
-            const next = neighbours[pick];
-            // console.log(
-            //     current.id,
-            //     neighbours.map((i) => i.id),
-            //     pick,
-            //     next.id
-            // );
-            if (next) {
-                _grid.removeWalls(current, next);
+            _next = neighbours[pick];
+            // 2.3
+            _grid.removeWalls(_current, _next);
 
-                next.setter({ type: 'VISITED', payload: true });
-                current.setter({ type: 'CURRENT', payload: false });
-                current = next;
-            }
+            _next.setter({ type: 'CURRENT', payload: true });
+
+            // 2.4
+            _stack.push(_next);
         }
+
+        return false;
     };
 
     const init = () => {};
@@ -36,7 +40,6 @@ const DFSNonRecursive: TMazeStrategyConstructor = function (this: TMazeStrategy,
 // const Kruskal: TMazeStrategyConstructor = function (this: TMazeStrategy, grid: TMaze) {
 //     const _grid = grid;
 //     this.solve = () => {
-//         console.log('solver kurskal');
 //     };
 
 //     const init = () => {};

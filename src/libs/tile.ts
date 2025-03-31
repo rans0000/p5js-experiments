@@ -16,7 +16,6 @@ const Tile = function (this: TTile, config: TTileConfig) {
 
     this.draw = () => {
         const dim = _gird.getWidth() / _gird.getSize();
-        // this.p5.rect(_x * dim, _y * dim, dim, dim);
         drawWalls();
         return this;
     };
@@ -25,11 +24,8 @@ const Tile = function (this: TTile, config: TTileConfig) {
         return { _x, _y };
     };
 
-    this.setWallStaus = (walls = [], stats = []) => {
-        if (walls.length !== stats.length) throw 'Error!! wall and stats parameters should have the same length';
-        for (let i = 0; i < walls.length; i++) {
-            _walls[i] = stats[i];
-        }
+    this.setWallStaus = (index: number, state: boolean) => {
+        _walls[index] = state;
     };
 
     this.getter = ((prop) => {
@@ -67,19 +63,20 @@ const Tile = function (this: TTile, config: TTileConfig) {
 
         //
         if (_isVisited) {
-            this.p5.fill(255, 255, 255);
+            this.p5.fill(255, 255, 50);
             this.p5.noStroke();
             this.p5.rect(0, 0, dim, dim);
         }
 
         if (_isCurrent) {
-            this.p5.fill(128, 255, 255);
+            this.p5.fill(128, 255, 50);
             this.p5.noStroke();
             this.p5.rect(0, 0, dim, dim);
         }
 
         this.p5.noFill();
         this.p5.stroke(255);
+
         // top wall
         _walls[0] && this.p5.line(0, 0, dim, 0);
         // right wall
@@ -90,9 +87,9 @@ const Tile = function (this: TTile, config: TTileConfig) {
         _walls[3] && this.p5.line(0, 0, 0, dim);
 
         // label
-        // this.p5.stroke(0);
+        this.p5.stroke(0);
         this.p5.fill(128);
-        this.p5.text(this.id, dim / 2, dim / 2);
+        // this.p5.text(this.id, dim / 2, dim / 2);
         //
 
         this.p5.pop();

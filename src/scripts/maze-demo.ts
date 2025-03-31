@@ -5,7 +5,7 @@ import { MOUSE_BTN } from 'src/utils/utils';
 
 /**--------------------------------- */
 // variables & types
-let grid: TMaze;
+let maze: TMaze;
 
 /**--------------------------------- */
 // sketch
@@ -37,7 +37,7 @@ const sketch = (p5: P5) => {
         p5.pixelDensity(1);
         p5.colorMode(p5.HSB);
         // p5.noLoop();
-        p5.frameRate(5);
+        // p5.frameRate(5);
         window.addEventListener('resize', () => resizeDisplay(p5));
 
         //
@@ -60,7 +60,7 @@ const sketch = (p5: P5) => {
 
     function draw() {
         p5.background(200, 60, 10);
-        grid.update(p5.deltaTime).draw();
+        maze.update(p5.deltaTime).draw();
     }
 
     function resizeDisplay(canvas: P5) {
@@ -69,7 +69,7 @@ const sketch = (p5: P5) => {
 
     function init(p5: P5) {
         p5.background(200, 60, 10);
-        grid = new Maze({ p5: p5, width: 360, size: 10, solver: 'DFS_Recursive' });
+        maze = new Maze({ p5: p5, width: 500, size: 20, solver: 'DFS_Recursive' });
     }
 
     /**--------------------------------- */
