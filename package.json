@@ -1,5 +1,5 @@
 {
-    "name": "P5JS-Experiments",
+    "name": "p5js-experiments",
     "version": "0.1.0",
     "description": "A collection of creative coding experiments using P5.js",
     "source": "src/index.html",

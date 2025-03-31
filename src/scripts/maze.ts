@@ -37,7 +37,7 @@ const sketch = (p5: P5) => {
         p5.pixelDensity(1);
         p5.colorMode(p5.HSB);
         // p5.noLoop();
-        // p5.frameRate(5);
+        p5.frameRate(5);
         window.addEventListener('resize', () => resizeDisplay(p5));
 
         //

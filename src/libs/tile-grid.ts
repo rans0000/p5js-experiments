@@ -79,6 +79,31 @@ const TileGrid = function (this: TTileGrid, config: TTileGridConfig) {
         return neighbours;
     };
 
+    this.removeWalls = (current, next) => {
+        const posA = current.getPosition();
+        const posB = next.getPosition();
+
+        const i = posA._x - posB._x;
+        const j = posA._y - posB._y;
+
+        if (i === 1) {
+            current.setWallStaus([3], [false]);
+            next.setWallStaus([1], [false]);
+        } else if (i === -1) {
+            current.setWallStaus([1], [false]);
+            next.setWallStaus([3], [false]);
+        }
+        if (j === 1) {
+            current.setWallStaus([0], [false]);
+            next.setWallStaus([2], [false]);
+        } else if (j === -1) {
+            current.setWallStaus([2], [false]);
+            next.setWallStaus([0], [false]);
+        }
+        console.log([current.id, next.id], i, j);
+        console.log(current.getter('WALLS'));
+    };
+
     const init = (config: TTileGridConfig) => {
         createTiles();
         this.setStrategy(config.solver);

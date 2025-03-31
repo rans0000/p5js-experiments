@@ -20,6 +20,8 @@ const DFSNonRecursive: TMazeStrategyConstructor = function (this: TMazeStrategy,
             //     next.id
             // );
             if (next) {
+                _grid.removeWalls(current, next);
+
                 next.setter({ type: 'VISITED', payload: true });
                 current.setter({ type: 'CURRENT', payload: false });
                 current = next;

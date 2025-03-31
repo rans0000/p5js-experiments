@@ -1,4 +1,4 @@
-import { TTile, TTileConfig, TTileSetter } from 'src/utils/types';
+import { TTile, TTileConfig, TTileGetter, TTileSetter } from 'src/utils/types';
 
 const Tile = function (this: TTile, config: TTileConfig) {
     this.p5 = config.p5;
@@ -8,7 +8,7 @@ const Tile = function (this: TTile, config: TTileConfig) {
     const _gird = config.grid;
     let _isVisited: boolean = false;
     let _isCurrent: boolean = false;
-    const _walls: [boolean, boolean, boolean, boolean] = [true, true, true, true];
+    let _walls: [boolean, boolean, boolean, boolean] = [true, true, true, true];
 
     this.update = () => {
         return this;
@@ -25,17 +25,26 @@ const Tile = function (this: TTile, config: TTileConfig) {
         return { _x, _y };
     };
 
-    this.getter = (prop) => {
+    this.setWallStaus = (walls = [], stats = []) => {
+        if (walls.length !== stats.length) throw 'Error!! wall and stats parameters should have the same length';
+        for (let i = 0; i < walls.length; i++) {
+            _walls[i] = stats[i];
+        }
+    };
+
+    this.getter = ((prop) => {
         switch (prop) {
             case 'CURRENT':
                 return _isCurrent;
             case 'VISITED':
                 return _isVisited;
+            case 'WALLS':
+                return _walls;
             default:
                 break;
         }
-        throw new Error(`Unrecongnised getter key: ${prop}`);
-    };
+        throw new Error(`Unknown getter key: ${prop}`);
+    }) as TTileGetter;
 
     this.setter = (action: TTileSetter) => {
         switch (action.type) {
@@ -53,8 +62,6 @@ const Tile = function (this: TTile, config: TTileConfig) {
     const drawWalls = () => {
         const dim = _gird.getWidth() / _gird.getSize();
 
-        this.p5.noFill();
-        this.p5.stroke(255);
         this.p5.push();
         this.p5.translate(_x * dim, _y * dim);
 
@@ -71,6 +78,8 @@ const Tile = function (this: TTile, config: TTileConfig) {
             this.p5.rect(0, 0, dim, dim);
         }
 
+        this.p5.noFill();
+        this.p5.stroke(255);
         // top wall
         _walls[0] && this.p5.line(0, 0, dim, 0);
         // right wall
@@ -81,12 +90,14 @@ const Tile = function (this: TTile, config: TTileConfig) {
         _walls[3] && this.p5.line(0, 0, 0, dim);
 
         // label
-        this.p5.stroke(0);
+        // this.p5.stroke(0);
         this.p5.fill(128);
         this.p5.text(this.id, dim / 2, dim / 2);
         //
 
         this.p5.pop();
+
+        // console.log(this.id, _walls);
     };
 } as unknown as { new (config: TTileConfig): TTile };
 export default Tile;

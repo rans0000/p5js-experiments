@@ -78,11 +78,18 @@ export type TSketch = {
     draw: () => TSketch;
 };
 
+export type TTileGetter = {
+    (prop: 'VISITED'): boolean;
+    (prop: 'CURRENT'): boolean;
+    (prop: 'WALLS'): [boolean, boolean, boolean, boolean];
+};
+
 export type TTile = {
     id: number;
     getter: TTileGetter;
     setter: (action: TTileSetter) => void;
     getPosition: () => { _x: number; _y: number };
+    setWallStaus: (walls: number[], stats: boolean[]) => void;
 } & TSketch;
 
 export type TTileConfig = {
@@ -94,7 +101,6 @@ export type TTileConfig = {
 };
 
 export type TMazeSolvers = 'DFS_Recursive' | 'Kruskal';
-export type TTileGetter = { (prop: 'VISITED'): boolean; (prop: 'CURRENT'): boolean };
 export type TTileSetter = { type: 'VISITED'; payload: boolean } | { type: 'CURRENT'; payload: boolean };
 
 export type TTileGrid = {
@@ -104,6 +110,7 @@ export type TTileGrid = {
     setStrategy: (solver: TMazeSolvers) => void;
     getIndex: (i: number, j: number) => number;
     getNeighbours: (tile: TTile) => TTile[];
+    removeWalls: (current: TTile, next: TTile) => void;
 } & TSketch;
 
 export type TTileGridConfig = {
