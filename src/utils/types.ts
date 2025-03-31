@@ -97,13 +97,13 @@ export type TTileConfig = {
     x: number;
     y: number;
     id: number;
-    grid: TTileGrid;
+    grid: TMaze;
 };
 
 export type TMazeSolvers = 'DFS_Recursive' | 'Kruskal';
 export type TTileSetter = { type: 'VISITED'; payload: boolean } | { type: 'CURRENT'; payload: boolean };
 
-export type TTileGrid = {
+export type TMaze = {
     getWidth: () => number;
     getSize: () => number;
     getTiles: () => TTile[];
@@ -113,7 +113,7 @@ export type TTileGrid = {
     removeWalls: (current: TTile, next: TTile) => void;
 } & TSketch;
 
-export type TTileGridConfig = {
+export type TMazeConfig = {
     p5: P5;
     size: number;
     width: number;
@@ -124,4 +124,4 @@ export type TMazeStrategy = {
     solve: () => void;
 };
 
-export type TMazeStrategyConstructor = new (grid: TTileGrid) => TMazeStrategy;
+export type TMazeStrategyConstructor = new (grid: TMaze) => TMazeStrategy;

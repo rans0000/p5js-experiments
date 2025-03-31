@@ -1,8 +1,8 @@
-import { TMazeSolvers, TMazeStrategy, TTile, TTileGrid, TTileGridConfig } from 'src/utils/types';
+import { TMaze, TMazeConfig, TMazeSolvers, TMazeStrategy, TTile } from 'src/utils/types';
 import { DFSNonRecursive } from './maze-strategies';
 import Tile from './tile';
 
-const TileGrid = function (this: TTileGrid, config: TTileGridConfig) {
+const Maze = function (this: TMaze, config: TMazeConfig) {
     this.p5 = config.p5;
     const _size = config.size;
     const _width = config.width;
@@ -104,12 +104,12 @@ const TileGrid = function (this: TTileGrid, config: TTileGridConfig) {
         console.log(current.getter('WALLS'));
     };
 
-    const init = (config: TTileGridConfig) => {
+    const init = (config: TMazeConfig) => {
         createTiles();
         this.setStrategy(config.solver);
     };
 
     init(config);
-} as unknown as { new (config: TTileGridConfig): TTileGrid };
+} as unknown as { new (config: TMazeConfig): TMaze };
 
-export default TileGrid;
+export default Maze;

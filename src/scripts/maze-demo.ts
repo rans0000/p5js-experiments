@@ -1,11 +1,11 @@
 import P5 from 'p5';
-import TileGrid from 'src/libs/tile-grid';
-import { TTileGrid } from 'src/utils/types';
+import Maze from 'src/libs/maze';
+import { TMaze } from 'src/utils/types';
 import { MOUSE_BTN } from 'src/utils/utils';
 
 /**--------------------------------- */
 // variables & types
-let grid: TTileGrid;
+let grid: TMaze;
 
 /**--------------------------------- */
 // sketch
@@ -69,7 +69,7 @@ const sketch = (p5: P5) => {
 
     function init(p5: P5) {
         p5.background(200, 60, 10);
-        grid = new TileGrid({ p5: p5, width: 360, size: 10, solver: 'DFS_Recursive' });
+        grid = new Maze({ p5: p5, width: 360, size: 10, solver: 'DFS_Recursive' });
     }
 
     /**--------------------------------- */

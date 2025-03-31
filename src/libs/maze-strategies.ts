@@ -1,6 +1,6 @@
-import { TMazeStrategy, TMazeStrategyConstructor, TTile, TTileGrid } from 'src/utils/types';
+import { TMaze, TMazeStrategy, TMazeStrategyConstructor, TTile } from 'src/utils/types';
 
-const DFSNonRecursive: TMazeStrategyConstructor = function (this: TMazeStrategy, grid: TTileGrid) {
+const DFSNonRecursive: TMazeStrategyConstructor = function (this: TMazeStrategy, grid: TMaze) {
     const _grid = grid;
     let current: TTile = _grid.getTiles()[0];
     let next: TTile;
@@ -33,7 +33,7 @@ const DFSNonRecursive: TMazeStrategyConstructor = function (this: TMazeStrategy,
     init();
 } as any;
 
-// const Kruskal: TMazeStrategyConstructor = function (this: TMazeStrategy, grid: TTileGrid) {
+// const Kruskal: TMazeStrategyConstructor = function (this: TMazeStrategy, grid: TMaze) {
 //     const _grid = grid;
 //     this.solve = () => {
 //         console.log('solver kurskal');
