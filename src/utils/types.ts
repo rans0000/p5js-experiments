@@ -125,3 +125,24 @@ export type TMazeStrategy = {
 };
 
 export type TMazeStrategyConstructor = new (grid: TMaze) => TMazeStrategy;
+
+export type TREdge = {
+    id: string;
+    directed: boolean;
+    start: TRVertex;
+    end: TRVertex;
+    data: unknown;
+};
+
+export type TRVertex = {
+    id: string;
+    edges: TREdge[];
+    data: unknown;
+    setEdge(end: TRVertex, directed: boolean, data: unknown): void;
+};
+
+export type TRGraph = {
+    id: string;
+    vertices: TRVertex[];
+    addVertex(vertex: TRVertex | TRVertex[]): void;
+};
