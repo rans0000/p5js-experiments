@@ -143,6 +143,13 @@ export type TRVertex<T, K> = {
 
 export type TRGraph<T, K> = {
     id: string;
+    isGrid: boolean;
     vertices: TRVertex<T, K>[];
     addVertex(vertex: TRVertex<T, K> | TRVertex<T, K>[]): void;
+    buildGrid(
+        rows: number,
+        columns: number,
+        vDataCallback: (x: number, y: number) => T,
+        eDataCallback: (start: TRVertex<T, K>, end: TRVertex<T, K>) => K
+    ): void;
 };
