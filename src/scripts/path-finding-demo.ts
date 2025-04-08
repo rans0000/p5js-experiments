@@ -1,6 +1,6 @@
 import { GUI } from 'dat.gui';
 import P5 from 'p5';
-import RGraph, { REdge, RVertex } from 'src/libs/r-graph';
+import RGraph, { RVertex } from 'src/libs/r-graph';
 import { TRVertex } from 'src/utils/types';
 // import { MOUSE_BTN } from 'src/utils/utils';
 
@@ -12,30 +12,45 @@ type TEData = {
     start: [number, number];
     end: [number, number];
 };
-let graph: MyGraph;
+let graph: MyGraph<TData, TEData>;
 
-class MyGraph extends RGraph {
+class MyGraph<T, K> extends RGraph<T, K> {
     p5: P5;
 
-    constructor(p5: P5, vertices: TRVertex[] = []) {
+    constructor(p5: P5, vertices: TRVertex<T, K>[] = []) {
         super(vertices);
         this.p5 = p5;
     }
 
     draw() {
         for (const vertex of this.vertices) {
-            // draw vertex
-            this.p5.circle((vertex.data as TData).pos[0], (vertex.data as TData).pos[1], 10);
-            // draw edge
-            this.p5.stroke(128);
-            for (const edge of vertex.edges) {
-                this.p5.line(
-                    (edge.data as TEData).start[0],
-                    (edge.data as TEData).start[1],
-                    (edge.data as TEData).end[0],
-                    (edge.data as TEData).end[1]
-                );
+            if (
+                vertex.data &&
+                vertex.data instanceof Object &&
+                'pos' in vertex.data &&
+                vertex.data.pos instanceof Array &&
+                vertex.data.pos.length > 0
+            ) {
+                this.p5.circle(vertex.data.pos[0], vertex.data.pos[1], 10);
+                // draw edge
+                this.p5.stroke(128);
+                for (const edge of vertex.edges) {
+                    if (
+                        edge.data &&
+                        edge.data instanceof Object &&
+                        'start' in edge.data &&
+                        edge.data.start instanceof Array &&
+                        edge.data.start.length > 0 &&
+                        'end' in edge.data &&
+                        edge.data.end instanceof Array &&
+                        edge.data.end.length > 0
+                    ) {
+                        this.p5.line(edge.data.start[0], edge.data.start[1], edge.data.end[0], edge.data.end[1]);
+                    }
+                }
             }
+
+            // draw vertex
         }
     }
 }
@@ -90,16 +105,17 @@ const sketch = (p5: P5) => {
     function init(p5: P5) {
         p5.background(200, 60, 10);
         const { innerWidth, innerHeight } = window;
-        graph = new MyGraph(p5);
+        graph = new MyGraph<TData, TEData>(p5);
         for (let i = 0; i < 5; i++) {
-            const v = new RVertex({ data: { pos: [p5.random(innerWidth), p5.random(innerHeight)] } });
+            const v = new RVertex<TData, TEData>({ data: { pos: [p5.random(innerWidth), p5.random(innerHeight)] } });
             graph.addVertex(v);
         }
         for (let i = 0; i < graph.vertices.length - 1; i++) {
             const startV = graph.vertices[i];
             const endV = graph.vertices[i + 1];
-            // const e = new REdge(graph.vertices[i + 1], graph.vertices[i], false, undefined);
-            startV.setEdge(endV, false, { start: (startV.data as TData).pos, end: (endV.data as TData).pos });
+            const data: TEData | undefined =
+                startV.data && endV.data ? { start: startV.data.pos, end: endV.data.pos } : undefined;
+            startV.setEdge(endV, false, data);
         }
     }
 

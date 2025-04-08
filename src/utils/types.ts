@@ -126,23 +126,23 @@ export type TMazeStrategy = {
 
 export type TMazeStrategyConstructor = new (grid: TMaze) => TMazeStrategy;
 
-export type TREdge = {
+export type TREdge<K, T> = {
     id: string;
     directed: boolean;
-    start: TRVertex;
-    end: TRVertex;
-    data: unknown;
+    start: TRVertex<T, K>;
+    end: TRVertex<T, K>;
+    data?: K;
 };
 
-export type TRVertex = {
+export type TRVertex<T, K> = {
     id: string;
-    edges: TREdge[];
-    data: unknown;
-    setEdge(end: TRVertex, directed: boolean, data: unknown): void;
+    edges: TREdge<K, T>[];
+    data?: T;
+    setEdge(end: TRVertex<T, K>, directed: boolean, data?: K): void;
 };
 
-export type TRGraph = {
+export type TRGraph<T, K> = {
     id: string;
-    vertices: TRVertex[];
-    addVertex(vertex: TRVertex | TRVertex[]): void;
+    vertices: TRVertex<T, K>[];
+    addVertex(vertex: TRVertex<T, K> | TRVertex<T, K>[]): void;
 };
