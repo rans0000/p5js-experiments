@@ -26,18 +26,24 @@ class MyGraph<T, K> extends RGraph<T, K> {
     }
 
     draw() {
+        const { mouseX, mouseY } = this.p5;
+        const offset = 10;
         this.p5.push();
-        this.p5.translate(20, 20);
+        this.p5.translate(offset, offset);
         for (const vertex of this.vertices) {
             if (vertex.data) {
                 const vData = vertex.data as unknown as TData;
 
                 // draw vertex
+                const dist = this.p5.dist(mouseX - offset, mouseY - offset, vData.pos[0], vData.pos[1]);
+                const color = dist < offset ? 255 : 50;
+
+                this.p5.fill(color);
                 this.p5.noStroke();
-                this.p5.circle(vData.pos[0], vData.pos[1], 20);
+                this.p5.circle(vData.pos[0], vData.pos[1], offset * 2);
                 this.p5.text(vData.num, vData.pos[0] - 5, vData.pos[1] + 5);
                 // draw edge
-                this.p5.stroke(128);
+                this.p5.stroke(50);
                 for (const edge of vertex.edges) {
                     if (edge.data) {
                         const eData = edge.data as unknown as TEData;
@@ -72,7 +78,7 @@ const sketch = (p5: P5) => {
         p5.background('white');
         p5.pixelDensity(1);
         p5.colorMode(p5.HSB);
-        p5.noLoop();
+        // p5.noLoop();
         window.addEventListener('resize', () => resizeDisplay(p5));
 
         //
@@ -83,7 +89,7 @@ const sketch = (p5: P5) => {
     p5.draw = () => {
         p5.background(200, 60, 10);
         graph.draw();
-        console.log(graph);
+        // console.log(graph);
     };
 
     // p5.mouseReleased = (e: MouseEvent) => {
