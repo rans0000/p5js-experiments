@@ -153,3 +153,14 @@ export type TRGraph<T, K> = {
         eDataCallback: (start: TRVertex<T, K>, end: TRVertex<T, K>) => K
     ): void;
 };
+
+export type TVertexData = {
+    num: number;
+    pos: [number, number];
+    x: number;
+    y: number;
+};
+export type TEdgeData = {
+    start: [number, number];
+    end: [number, number];
+};
