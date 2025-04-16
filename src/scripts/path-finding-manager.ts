@@ -43,7 +43,7 @@ export class PathFindingManager<T, K> extends RGraph<T, K> {
         this.p5.pop();
     }
 
-    selectVertex([px, py]: [number, number]) {
+    toggleVertexActiveStatus([px, py]: [number, number]) {
         for (const vertex of this.vertices) {
             if (vertex.data) {
                 const vData = vertex.data as unknown as TVertexData;

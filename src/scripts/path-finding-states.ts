@@ -13,11 +13,15 @@ type TActionFunctions = {
 type TTransitionTable = {
     [K in TState]: Partial<Record<TActionName, (payload?: unknown) => void>>;
 };
+type TDispatch = <T extends keyof TActionFunctions>(
+    actionName: T,
+    ...args: Parameters<TActionFunctions[T]>
+) => ReturnType<TActionFunctions[T]>;
 type TUiMachine = {
     state: TState;
     actions: TActionFunctions;
     transition: TTransitionTable;
-    dispatch: (actionName: TActionName, payload?: unknown) => void;
+    dispatch: TDispatch;
     changeState: (newState: TState) => void;
 };
 
@@ -37,7 +41,7 @@ export function UIMachine(p5: p5) {
             },
             toggleWalls: function (pos: [number, number]) {
                 if (!graph) return;
-                graph.selectVertex(pos);
+                graph.toggleVertexActiveStatus(pos);
             },
             changeToStart: function () {
                 console.log('start - changing to start...');
@@ -45,12 +49,12 @@ export function UIMachine(p5: p5) {
             }
         },
         transition: {} as TTransitionTable,
-        dispatch: function (actionName: TActionName, payload?: unknown) {
+        dispatch: function (actionName, ...args) {
             const state = this.transition[this.state];
             const action = state[actionName];
 
             if (action) {
-                action.call(this, payload);
+                return action.call(this, ...args);
             } else {
                 console.log(`no method ${actionName}() in ${this.state}`);
             }
@@ -102,8 +106,11 @@ export function UIMachine(p5: p5) {
         );
     }
 
-    function dispatch(actionName: TActionName, payload?: unknown) {
-        return uiMachine.dispatch.call(uiMachine, actionName, payload);
+    function dispatch<T extends keyof TActionFunctions>(
+        actionName: T,
+        ...arg: Parameters<TActionFunctions[T]>
+    ): ReturnType<TActionFunctions[T]> {
+        return uiMachine.dispatch.call(uiMachine, actionName, ...arg);
     }
 
     return {
