@@ -3,13 +3,29 @@ import { TEdgeData, TVertexData } from 'src/utils/types';
 import { PathFindingManager } from './path-finding-manager';
 
 type TState = 'START' | 'DRAWGRID';
-type TActionName = 'draw' | 'changeToDraw' | 'changeToStart' | 'toggleWalls';
+type TActionName = 'draw' | 'changeToDraw' | 'toggleWalls' | 'changeToStart';
+type TActionFunctions = {
+    draw: () => void;
+    changeToDraw: () => void;
+    toggleWalls: (pos: [number, number]) => void;
+    changeToStart: () => void;
+};
+type TTransitionTable = {
+    [K in TState]: Partial<Record<TActionName, (payload?: unknown) => void>>;
+};
+type TUiMachine = {
+    state: TState;
+    actions: TActionFunctions;
+    transition: TTransitionTable;
+    dispatch: (actionName: TActionName, payload?: unknown) => void;
+    changeState: (newState: TState) => void;
+};
 
 export function UIMachine(p5: p5) {
     let graph: PathFindingManager<TVertexData, TEdgeData>;
 
-    const uiMachine = {
-        state: 'START' as TState,
+    const uiMachine: TUiMachine = {
+        state: 'START',
         actions: {
             draw: function () {
                 if (!graph) return;
@@ -28,7 +44,7 @@ export function UIMachine(p5: p5) {
                 uiMachine.changeState('START');
             }
         },
-        transition: {} as Record<string, Record<string, Function>>,
+        transition: {} as TTransitionTable,
         dispatch: function (actionName: TActionName, payload?: unknown) {
             const state = this.transition[this.state];
             const action = state[actionName];
