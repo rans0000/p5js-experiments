@@ -24,10 +24,10 @@ const sketch = (p5: P5) => {
     const gui = new GUI({ autoPlace: false });
     gui.domElement.id = 'gui';
     document.getElementById('gui')?.appendChild(gui.domElement);
-    gui.add(options, 'mode', ['view', 'draw']).onChange(toggleDrawMode);
-    toggleDrawMode('view');
+    gui.add(options, 'mode', ['view', 'draw']).onChange((val: TMode) => toggleDrawMode(val, false));
+    toggleDrawMode('view', true);
 
-    function toggleDrawMode(val: TMode) {
+    function toggleDrawMode(val: TMode, force: boolean) {
         let folder;
         switch (val) {
             case 'view':
@@ -35,7 +35,7 @@ const sketch = (p5: P5) => {
                 folder.open();
                 folder.add(options, 'algo', ['dfs', 'bfs']);
                 uiMachine.dispatch('changeToStart');
-                uiMachine.createGraph();
+                uiMachine.createGraph(force);
                 break;
             case 'draw':
                 folder = gui.__folders['Search Algos'];
@@ -64,6 +64,10 @@ const sketch = (p5: P5) => {
     p5.draw = () => {
         p5.background(200, 60, 10);
         uiMachine.dispatch('draw');
+    };
+
+    p5.mouseClicked = (e: MouseEvent) => {
+        uiMachine.dispatch('toggleWalls', [e.clientX, e.clientY]);
     };
 
     /**--------------------------------- */

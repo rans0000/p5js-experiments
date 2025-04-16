@@ -159,6 +159,7 @@ export type TVertexData = {
     pos: [number, number];
     x: number;
     y: number;
+    isWall: boolean;
 };
 export type TEdgeData = {
     start: [number, number];

@@ -3,7 +3,7 @@ import { PathFindingManager } from './path-finding-manager';
 import p5 from 'p5';
 
 type TState = 'START' | 'DRAWGRID';
-type TActionName = 'draw' | 'changeToDraw' | 'changeToStart';
+type TActionName = 'draw' | 'changeToDraw' | 'changeToStart' | 'toggleWalls';
 
 export function UIMachine(p5: p5) {
     let graph: PathFindingManager<TVertexData, TEdgeData>;
@@ -25,6 +25,12 @@ export function UIMachine(p5: p5) {
             DRAWGRID: {
                 draw: function () {
                     console.log('drawgrid draw...');
+                    if (!graph) return;
+                    graph.draw();
+                },
+                toggleWalls: function (pos: [number, number]) {
+                    if (!graph) return;
+                    graph.selectVertex(pos);
                 },
                 changeToStart: function () {
                     console.log('start - changing to start...');
@@ -49,8 +55,9 @@ export function UIMachine(p5: p5) {
         }
     };
 
-    function createGraph() {
-        console.log('creating graph...');
+    function createGraph(force: boolean = true) {
+        console.log(`creating graph... ${force}`);
+        if (graph && !force) return;
 
         const size = 50;
         const rows = 10;
@@ -64,7 +71,8 @@ export function UIMachine(p5: p5) {
                     num: y * rows + x,
                     x,
                     y,
-                    pos: [x * size, y * size]
+                    pos: [x * size, y * size],
+                    isWall: false
                 };
             },
             (start, end) => {
