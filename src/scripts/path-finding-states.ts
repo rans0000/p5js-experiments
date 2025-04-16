@@ -1,6 +1,6 @@
+import p5 from 'p5';
 import { TEdgeData, TVertexData } from 'src/utils/types';
 import { PathFindingManager } from './path-finding-manager';
-import p5 from 'p5';
 
 type TState = 'START' | 'DRAWGRID';
 type TActionName = 'draw' | 'changeToDraw' | 'changeToStart' | 'toggleWalls';
@@ -10,34 +10,25 @@ export function UIMachine(p5: p5) {
 
     const uiMachine = {
         state: 'START' as TState,
-        transition: {
-            START: {
-                draw: function () {
-                    if (!graph) return;
-                    graph.draw();
-                },
-
-                changeToDraw: function () {
-                    console.log('start - changing to draw...');
-                    this.changeState('DRAWGRID');
-                }
+        actions: {
+            draw: function () {
+                if (!graph) return;
+                graph.draw();
             },
-            DRAWGRID: {
-                draw: function () {
-                    console.log('drawgrid draw...');
-                    if (!graph) return;
-                    graph.draw();
-                },
-                toggleWalls: function (pos: [number, number]) {
-                    if (!graph) return;
-                    graph.selectVertex(pos);
-                },
-                changeToStart: function () {
-                    console.log('start - changing to start...');
-                    this.changeState('START');
-                }
+            changeToDraw: function () {
+                console.log('start - changing to draw...');
+                uiMachine.changeState('DRAWGRID');
+            },
+            toggleWalls: function (pos: [number, number]) {
+                if (!graph) return;
+                graph.selectVertex(pos);
+            },
+            changeToStart: function () {
+                console.log('start - changing to start...');
+                uiMachine.changeState('START');
             }
         },
+        transition: {} as Record<string, Record<string, Function>>,
         dispatch: function (actionName: TActionName, payload?: unknown) {
             const state = this.transition[this.state];
             const action = state[actionName];
@@ -52,6 +43,17 @@ export function UIMachine(p5: p5) {
             if (this.transition.hasOwnProperty(newState)) {
                 this.state = newState;
             }
+        }
+    };
+    uiMachine.transition = {
+        START: {
+            draw: uiMachine.actions.draw.bind(uiMachine),
+            changeToDraw: uiMachine.actions.changeToDraw.bind(uiMachine)
+        },
+        DRAWGRID: {
+            draw: uiMachine.actions.draw.bind(uiMachine),
+            toggleWalls: uiMachine.actions.toggleWalls.bind(uiMachine),
+            changeToStart: uiMachine.actions.changeToStart.bind(uiMachine)
         }
     };
 
@@ -96,13 +98,3 @@ export function UIMachine(p5: p5) {
         }
     };
 }
-
-// let uiMachine = UIMachine();
-// console.log(uiMachine.state);
-// uiMachine.dispatch('draw');
-// uiMachine.dispatch('search', 'dfs');
-// uiMachine.dispatch('drawGrid');
-// uiMachine.dispatch('changeToDraw');
-// console.log(uiMachine.state);
-// uiMachine.dispatch('draw');
-// uiMachine.dispatch('drawGrid');
