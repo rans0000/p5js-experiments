@@ -2,18 +2,19 @@ import { TEdgeData, TVertexData } from 'src/utils/types';
 import { PathFindingManager } from './path-finding-manager';
 import p5 from 'p5';
 
+type TState = 'START' | 'DRAWGRID';
+type TActionName = 'draw' | 'changeToDraw' | 'changeToStart';
+
 export function UIMachine(p5: p5) {
     let graph: PathFindingManager<TVertexData, TEdgeData>;
 
     const uiMachine = {
-        state: 'START',
+        state: 'START' as TState,
         transition: {
             START: {
                 draw: function () {
-                    // console.log('start draw...');
-                    if (graph) {
-                        graph.draw();
-                    }
+                    if (!graph) return;
+                    graph.draw();
                 },
 
                 changeToDraw: function () {
@@ -31,7 +32,7 @@ export function UIMachine(p5: p5) {
                 }
             }
         },
-        dispatch: function (actionName: string, payload?: unknown) {
+        dispatch: function (actionName: TActionName, payload?: unknown) {
             const state = this.transition[this.state];
             const action = state[actionName];
 
@@ -41,7 +42,7 @@ export function UIMachine(p5: p5) {
                 console.log(`no method ${actionName}() in ${this.state}`);
             }
         },
-        changeState: function (newState: string) {
+        changeState: function (newState: TState) {
             if (this.transition.hasOwnProperty(newState)) {
                 this.state = newState;
             }
@@ -75,8 +76,8 @@ export function UIMachine(p5: p5) {
         );
     }
 
-    function dispatch(state: string, payload?: unknown) {
-        return uiMachine.dispatch.call(uiMachine, state, payload);
+    function dispatch(actionName: TActionName, payload?: unknown) {
+        return uiMachine.dispatch.call(uiMachine, actionName, payload);
     }
 
     return {

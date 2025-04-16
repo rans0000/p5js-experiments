@@ -5,6 +5,7 @@ import { UIMachine } from './path-finding-states';
 
 /**--------------------------------- */
 type TMode = 'view' | 'draw';
+type TAlgo = 'dfs' | 'bfs' | 'dijkstra' | 'astar';
 
 /**--------------------------------- */
 // sketch
@@ -17,7 +18,7 @@ const sketch = (p5: P5) => {
             init(p5);
         },
         selectionSize: 100,
-        algo: 'dfs'
+        algo: 'dfs' as TAlgo
     };
 
     const gui = new GUI({ autoPlace: false });
